@@ -1,0 +1,51 @@
+<section class="min-h-screen flex items-center justify-center p-4 bg-background">
+    <div class="glass w-full max-w-lg rounded-[40px] p-12 md:p-16 border shadow-2xl animate-fade-in">
+        <div class="text-center mb-12">
+            <div
+                class="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white font-bold text-3xl shadow-lg mx-auto mb-6">
+                SP</div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Admin Portal</h1>
+            <p class="text-gray-500 uppercase tracking-widest text-xs font-bold">Secure Access Required</p>
+        </div>
+
+        <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="space-y-6">
+            <div class="relative group">
+                <div
+                    class="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
+                    <lucide-icon [name]="User" size="20"></lucide-icon>
+                </div>
+                <input type="text" [(ngModel)]="credentials.username" name="username" required
+                    placeholder="Email or Username"
+                    class="w-full bg-background/50 border-2 border-gray-100 rounded-2xl p-5 pl-16 focus:border-primary outline-none transition-all">
+            </div>
+
+            <div class="relative group">
+                <div
+                    class="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
+                    <lucide-icon [name]="Lock" size="20"></lucide-icon>
+                </div>
+                <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="credentials.password" name="password"
+                    required placeholder="Password"
+                    class="w-full bg-background/50 border-2 border-gray-100 rounded-2xl p-5 pl-16 focus:border-primary outline-none transition-all">
+                <button type="button" (click)="showPassword = !showPassword"
+                    class="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors">
+                    <lucide-icon [name]="showPassword ? EyeOff : Eye" size="20"></lucide-icon>
+                </button>
+            </div>
+
+            <div *ngIf="error" class="text-red-500 text-sm font-bold bg-red-50 p-4 rounded-xl flex items-center gap-3">
+                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                {{error}}
+            </div>
+
+            <button type="submit" [disabled]="!loginForm.valid"
+                class="btn-primary w-full py-6 text-xl justify-center shadow-xl shadow-primary/20">
+                Sign In
+            </button>
+
+            <div class="text-center pt-8 border-t border-gray-100">
+                <a routerLink="/" class="text-gray-400 hover:text-primary font-bold text-sm">Return to Website</a>
+            </div>
+        </form>
+    </div>
+</section>

@@ -1,0 +1,64 @@
+<!-- Top Header -->
+<div class="bg-primary text-white py-2 px-4 flex justify-between items-center text-sm hidden md:flex">
+  <div class="flex gap-6">
+    <div class="flex items-center gap-2">
+      <lucide-icon [name]="Phone" size="14"></lucide-icon>
+      <span>+91-XXXX-XXXXXX</span>
+    </div>
+    <div class="flex items-center gap-2 border-l border-white/20 pl-6">
+      <lucide-icon [name]="Mail" size="14"></lucide-icon>
+      <span>info@sripadhanjaliyoga.org</span>
+    </div>
+  </div>
+  <div class="flex gap-4">
+    <a href="#" class="hover:text-accent transition-colors"><lucide-icon [name]="Facebook" size="16"></lucide-icon></a>
+    <a href="#" class="hover:text-accent transition-colors"><lucide-icon [name]="Instagram" size="16"></lucide-icon></a>
+    <a href="#" class="hover:text-accent transition-colors"><lucide-icon [name]="Youtube" size="16"></lucide-icon></a>
+  </div>
+</div>
+
+<!-- Main Nav -->
+<header class="sticky top-0 z-50 glass border-b border-gray-100">
+  <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+    <!-- Brand -->
+    <a routerLink="/" class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">SP</div>
+      <div class="hidden sm:block">
+        <h1 class="font-bold text-primary leading-tight">Sri Padhanjaliyoga</h1>
+        <p class="text-[10px] text-gray-500 tracking-widest uppercase">Arakattalai Trust</p>
+      </div>
+    </a>
+
+    <!-- Nav Menu Desktop -->
+    <nav class="hidden lg:flex items-center gap-8 text-sm font-medium text-gray-700">
+      <a routerLink="/" routerLinkActive="text-primary font-bold" class="hover:text-primary transition-colors">Home</a>
+      <a routerLink="/about" routerLinkActive="text-primary font-bold" class="hover:text-primary transition-colors">About Us</a>
+      <a routerLink="/programs" routerLinkActive="text-primary font-bold" class="hover:text-primary transition-colors">Programs</a>
+      <a routerLink="/get-involved" routerLinkActive="text-primary font-bold" class="hover:text-primary transition-colors">Get Involved</a>
+      <a routerLink="/news" routerLinkActive="text-primary font-bold" class="hover:text-primary transition-colors">News</a>
+      <a routerLink="/gallery" routerLinkActive="text-primary font-bold" class="hover:text-primary transition-colors">Gallery</a>
+      <a routerLink="/contact" routerLinkActive="text-primary font-bold" class="hover:text-primary transition-colors">Contact</a>
+    </nav>
+
+    <!-- CTAs -->
+    <div class="flex items-center gap-4">
+      <a routerLink="/donate" class="btn-primary py-2 px-5 text-sm">Donate Now</a>
+      <button class="lg:hidden text-primary" (click)="toggleMenu()">
+        <lucide-icon [name]="isMenuOpen ? X : Menu"></lucide-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile Menu -->
+  <div *ngIf="isMenuOpen" class="lg:hidden animate-fade-in bg-white border-t border-gray-50 p-4 absolute top-full left-0 w-full shadow-2xl">
+    <div class="flex flex-col gap-4 text-gray-700 font-medium">
+      <a routerLink="/" (click)="toggleMenu()" class="p-2">Home</a>
+      <a routerLink="/about" (click)="toggleMenu()" class="p-2">About Us</a>
+      <a routerLink="/programs" (click)="toggleMenu()" class="p-2">Programs</a>
+      <a routerLink="/get-involved" (click)="toggleMenu()" class="p-2">Get Involved</a>
+      <a routerLink="/news" (click)="toggleMenu()" class="p-2">News</a>
+      <a routerLink="/gallery" (click)="toggleMenu()" class="p-2">Gallery</a>
+      <a routerLink="/contact" (click)="toggleMenu()" class="p-2">Contact</a>
+    </div>
+  </div>
+</header>

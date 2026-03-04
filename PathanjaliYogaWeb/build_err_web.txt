@@ -1,0 +1,12 @@
+﻿[33mΓ¥»[39m Building...
+[32mΓ£ö[39m Building...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m        [2m | [22m [1mRaw size[22m[2m | [22m[1mEstimated transfer size[22m
+[32mmain-YBTYMMB4.js[39m   [2m | [22m[2mmain[22m         [2m | [22m[36m376.53 kB[39m[2m | [22m               [36m95.31 kB[39m
+[32mstyles-YMVIHFOX.css[39m[2m | [22m[2mstyles[22m       [2m | [22m [36m28.04 kB[39m[2m | [22m                [36m4.61 kB[39m
+
+[1m [22m                  [2m | [22m[1mInitial total[22m[2m | [22m[1m404.57 kB[22m[2m | [22m               [1m99.92 kB[22m
+
+Application bundle generation complete. [9.893 seconds] - 2026-03-01T00:46:45.887Z
+
+Output location: C:\Users\sivap\source\Yoga\Yoga.Web\dist\Yoga.Web
+
