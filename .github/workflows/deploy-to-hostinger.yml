@@ -35,11 +35,14 @@ jobs:
         npm run build -- --configuration production
         
     - name: Deploy to Hostinger via FTP
+      env:
+        FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+        FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
       uses: SamKirkland/FTP-Deploy-Action@4.3.0
       with:
         server: 89.117.27.43
-        username: ${{ secrets.FTP_USERNAME }}
-        password: ${{ secrets.FTP_PASSWORD }}
+        username: ${{ env.FTP_USERNAME }}
+        password: ${{ env.FTP_PASSWORD }}
         local-dir: ./PathanjaliYogaWeb/dist/
         server-dir: /public_html/
         port: 21
