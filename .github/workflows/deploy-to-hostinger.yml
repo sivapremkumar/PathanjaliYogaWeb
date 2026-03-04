@@ -1,6 +1,7 @@
 name: Deploy to Hostinger
 
 # Auto-deployment workflow for Angular app to Hostinger FTP
+# Updated: 2025-03-04
 
 on:
   push:
