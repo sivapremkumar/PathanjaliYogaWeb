@@ -3,7 +3,7 @@
   <div class="flex gap-6">
     <div class="flex items-center gap-2">
       <lucide-icon [name]="Phone" size="14"></lucide-icon>
-      <span>+91-XXXX-XXXXXX</span>
+      <span>+91 96885 42400</span>
     </div>
     <div class="flex items-center gap-2 border-l border-white/20 pl-6">
       <lucide-icon [name]="Mail" size="14"></lucide-icon>
@@ -22,7 +22,9 @@
   <div class="container mx-auto px-4 py-4 flex justify-between items-center">
     <!-- Brand -->
     <a routerLink="/" class="flex items-center gap-3">
-      <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">SP</div>
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+        SP</div>
       <div class="hidden sm:block">
         <h1 class="font-bold text-primary leading-tight">Sri Padhanjaliyoga</h1>
         <p class="text-[10px] text-gray-500 tracking-widest uppercase">Arakattalai Trust</p>
@@ -32,12 +34,18 @@
     <!-- Nav Menu Desktop -->
     <nav class="hidden lg:flex items-center gap-8 text-sm font-medium text-gray-700">
       <a routerLink="/" routerLinkActive="text-primary font-bold" class="hover:text-primary transition-colors">Home</a>
-      <a routerLink="/about" routerLinkActive="text-primary font-bold" class="hover:text-primary transition-colors">About Us</a>
-      <a routerLink="/programs" routerLinkActive="text-primary font-bold" class="hover:text-primary transition-colors">Programs</a>
-      <a routerLink="/get-involved" routerLinkActive="text-primary font-bold" class="hover:text-primary transition-colors">Get Involved</a>
-      <a routerLink="/news" routerLinkActive="text-primary font-bold" class="hover:text-primary transition-colors">News</a>
-      <a routerLink="/gallery" routerLinkActive="text-primary font-bold" class="hover:text-primary transition-colors">Gallery</a>
-      <a routerLink="/contact" routerLinkActive="text-primary font-bold" class="hover:text-primary transition-colors">Contact</a>
+      <a routerLink="/about" routerLinkActive="text-primary font-bold"
+        class="hover:text-primary transition-colors">About Us</a>
+      <a routerLink="/programs" routerLinkActive="text-primary font-bold"
+        class="hover:text-primary transition-colors">Programs</a>
+      <a routerLink="/get-involved" routerLinkActive="text-primary font-bold"
+        class="hover:text-primary transition-colors">Get Involved</a>
+      <a routerLink="/news" routerLinkActive="text-primary font-bold"
+        class="hover:text-primary transition-colors">News</a>
+      <a routerLink="/gallery" routerLinkActive="text-primary font-bold"
+        class="hover:text-primary transition-colors">Gallery</a>
+      <a routerLink="/contact" routerLinkActive="text-primary font-bold"
+        class="hover:text-primary transition-colors">Contact</a>
     </nav>
 
     <!-- CTAs -->
@@ -50,7 +58,8 @@
   </div>
 
   <!-- Mobile Menu -->
-  <div *ngIf="isMenuOpen" class="lg:hidden animate-fade-in bg-white border-t border-gray-50 p-4 absolute top-full left-0 w-full shadow-2xl">
+  <div *ngIf="isMenuOpen"
+    class="lg:hidden animate-fade-in bg-white border-t border-gray-50 p-4 absolute top-full left-0 w-full shadow-2xl">
     <div class="flex flex-col gap-4 text-gray-700 font-medium">
       <a routerLink="/" (click)="toggleMenu()" class="p-2">Home</a>
       <a routerLink="/about" (click)="toggleMenu()" class="p-2">About Us</a>
