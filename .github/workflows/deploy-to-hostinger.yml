@@ -43,7 +43,7 @@ jobs:
         server: 89.117.27.43
         username: ${{ env.FTP_USERNAME }}
         password: ${{ env.FTP_PASSWORD }}
-        local-dir: ./PathanjaliYogaWeb/dist/
+        local-dir: ./PathanjaliYogaWeb/dist/Yoga.Web/browser/
         server-dir: /public_html/
         port: 21
         exclude: "*.map"
