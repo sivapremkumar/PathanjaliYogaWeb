@@ -89,10 +89,10 @@
 
         <!-- Active Content Area -->
         <div *ngIf="activeTab !== 'stats'" class="animate-fade-in mt-12">
-            <div
-                class="bg-white rounded-[40px] p-12 shadow-sm min-h-[60vh] flex items-center justify-center border border-gray-100 italic text-gray-400">
-                Content for {{activeTab}} is being generated...
-            </div>
+            <app-donations *ngIf="activeTab === 'donations'"></app-donations>
+            <app-trustees *ngIf="activeTab === 'trustees'"></app-trustees>
+            <app-news *ngIf="activeTab === 'gallery'"></app-news>
+            <app-inquiries *ngIf="activeTab === 'inquiries'"></app-inquiries>
         </div>
     </main>
 </div>

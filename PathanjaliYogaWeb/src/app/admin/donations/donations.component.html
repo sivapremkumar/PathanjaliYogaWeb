@@ -1,0 +1,35 @@
+<div class="animate-fade-in">
+    <div class="flex justify-between items-center mb-8">
+        <h2 class="text-3xl font-bold">Donations Log</h2>
+    </div>
+
+    <div class="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead
+                    class="bg-gray-50 border-b border-gray-100 text-gray-500 uppercase text-xs font-bold tracking-widest">
+                    <tr>
+                        <th class="p-6">Donor</th>
+                        <th class="p-6">Email</th>
+                        <th class="p-6">Amount</th>
+                        <th class="p-6">Date</th>
+                        <th class="p-6">Transaction ID</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    <tr *ngFor="let d of donations" class="hover:bg-gray-50/50 transition-colors">
+                        <td class="p-6 font-bold text-gray-900">{{d.donorName || 'Anonymous'}}</td>
+                        <td class="p-6 text-gray-500">{{d.donorEmail || '-'}}</td>
+                        <td class="p-6 font-bold text-primary">₹{{d.amount}}</td>
+                        <td class="p-6 text-gray-500">{{d.createdAt | date:'medium'}}</td>
+                        <td class="p-6 font-mono text-xs text-gray-400">{{d.razorpayPaymentId || d.razorpayOrderId}}
+                        </td>
+                    </tr>
+                    <tr *ngIf="donations.length === 0">
+                        <td colspan="5" class="p-12 text-center text-gray-400 font-bold italic">No donations found.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

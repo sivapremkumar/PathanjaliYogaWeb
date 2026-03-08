@@ -1,0 +1,30 @@
+<div class="animate-fade-in">
+    <div class="flex justify-between items-center mb-8">
+        <h2 class="text-3xl font-bold">Contact Inquiries</h2>
+    </div>
+
+    <div class="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden p-8">
+        <div class="space-y-6">
+            <div *ngFor="let i of inquiries"
+                class="p-6 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors">
+                <div class="flex justify-between md:items-center gap-4 flex-col md:flex-row mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">{{i.name}}</h3>
+                        <div class="text-sm font-bold text-primary">{{i.email}}</div>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400">
+                        <lucide-icon [name]="Clock" size="14"></lucide-icon>
+                        {{i.createdAt | date:'medium'}}
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl text-gray-600 border border-gray-100 italic">
+                    "{{i.message}}"
+                </div>
+            </div>
+
+            <div *ngIf="inquiries.length === 0" class="text-center p-12 text-gray-400 font-bold italic">
+                No inquiries received yet.
+            </div>
+        </div>
+    </div>
+</div>
