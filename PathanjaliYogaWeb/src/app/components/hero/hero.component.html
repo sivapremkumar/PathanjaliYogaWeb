@@ -14,7 +14,8 @@
                 Empowering Lives through <span class="text-primary italic">Yoga</span>
             </h1>
             <p class="text-lg text-gray-600 mb-10 leading-relaxed max-w-lg">
-                Sri Padhanjaliyoga Arakattalai is a welfare trust dedicated to promoting physical harmony, mental peace,
+                Sri Padhanjali Yoga Arakattalai is a welfare trust dedicated to promoting physical harmony, mental
+                peace,
                 and social welfare across Sankarankoil.
             </p>
 
@@ -50,10 +51,21 @@
                 <div
                     class="absolute -top-10 -left-10 w-full h-full border-4 border-accent rounded-3xl -z-10 transition-transform group-hover:-translate-x-4 group-hover:-translate-y-4">
                 </div>
-                <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=800"
-                    alt="Yoga Session" class="w-full h-[550px] object-cover rounded-3xl shadow-2xl">
+                <div class="relative w-full h-[550px]">
+                    @for (img of images; track img; let i = $index) {
+                    <img [src]="img" alt="Yoga Session"
+                        class="absolute top-0 left-0 w-full h-full object-cover rounded-3xl shadow-2xl transition-all duration-1000 ease-in-out"
+                        [ngStyle]="{
+                                'opacity': i === currentIndex ? '1' : i === (currentIndex + 1) % images.length ? '0.7' : i === (currentIndex + 2) % images.length ? '0.4' : '0',
+                                'transform': i === currentIndex ? 'scale(1) translate(0px, 0px)' : 
+                                             i === (currentIndex + 1) % images.length ? 'scale(0.95) translate(-40px, -40px)' : 
+                                             i === (currentIndex + 2) % images.length ? 'scale(0.9) translate(-80px, -80px)' : 'scale(0.8) translate(-120px, -120px)',
+                                'z-index': i === currentIndex ? '30' : i === (currentIndex + 1) % images.length ? '20' : i === (currentIndex + 2) % images.length ? '10' : '0'
+                            }">
+                    }
+                </div>
                 <div
-                    class="absolute -bottom-6 -left-6 glass p-6 rounded-2xl flex items-center gap-4 animate-bounce hover:pause">
+                    class="absolute -bottom-6 -left-6 z-40 glass p-6 rounded-2xl flex items-center gap-4 animate-bounce hover:pause">
                     <div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-white">
                         <lucide-icon [name]="Calendar" size="24"></lucide-icon>
                     </div>
