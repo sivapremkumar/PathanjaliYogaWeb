@@ -44,7 +44,7 @@ jobs:
         username: ${{ env.FTP_USERNAME }}
         password: ${{ env.FTP_PASSWORD }}
         local-dir: ./PathanjaliYogaWeb/dist/Yoga.Web/browser/
-        server-dir: public_html/
+        server-dir: ./
         port: 21
         exclude: "*.map"
         log-level: standard
