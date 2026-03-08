@@ -38,13 +38,13 @@ jobs:
       env:
         FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
         FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-      uses: SamKirkland/FTP-Deploy-Action@4.3.0
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
         server: 89.117.27.43
         username: ${{ env.FTP_USERNAME }}
         password: ${{ env.FTP_PASSWORD }}
         local-dir: ./PathanjaliYogaWeb/dist/Yoga.Web/browser/
-        server-dir: /public_html/
+        server-dir: public_html/
         port: 21
         exclude: "*.map"
         log-level: standard
