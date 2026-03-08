@@ -48,4 +48,4 @@ jobs:
         port: 21
         exclude: "*.map"
         log-level: standard
-        security: standard
+        security: loose
