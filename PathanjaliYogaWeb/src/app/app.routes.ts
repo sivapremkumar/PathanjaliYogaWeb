@@ -9,6 +9,7 @@ import { ContactComponent } from './pages/contact/contact.component';
 import { DonateComponent } from './pages/donate/donate.component';
 import { LoginComponent } from './admin/login/login.component';
 import { DashboardComponent } from './admin/dashboard/dashboard.component';
+import { authGuard } from './services/auth.guard';
 
 export const routes: Routes = [
     { path: '', component: HomeComponent },
@@ -20,6 +21,6 @@ export const routes: Routes = [
     { path: 'contact', component: ContactComponent },
     { path: 'donate', component: DonateComponent },
     { path: 'admin/login', component: LoginComponent },
-    { path: 'admin/dashboard', component: DashboardComponent },
+    { path: 'admin/dashboard', component: DashboardComponent, canActivate: [authGuard] },
     { path: '**', redirectTo: '' }
 ];
