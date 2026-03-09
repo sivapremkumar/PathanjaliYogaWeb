@@ -20,8 +20,34 @@ export class AboutComponent implements OnInit {
     constructor(private api: ApiService) { }
 
     ngOnInit() {
-        this.api.getTrustees().subscribe(res => {
-            this.trustees = res;
-        });
+        this.api.getTrustees().subscribe(
+            res => {
+                if (res && res.length > 0) {
+                    this.trustees = res;
+                } else {
+                    this.loadDefaultTrustees();
+                }
+            },
+            err => {
+                this.loadDefaultTrustees();
+            }
+        );
+
+        // Load defaults immediately in case API takes time or fails
+        if (this.trustees.length === 0) {
+            this.loadDefaultTrustees();
+        }
+    }
+
+    loadDefaultTrustees() {
+        this.trustees = [
+            { id: 1, name: 'Jeyaram', role: 'President', bio: '', profileImageUrl: 'jeyaram.jpeg' },
+            { id: 2, name: 'Kasimani', role: 'Trustee', bio: '', profileImageUrl: '' },
+            { id: 3, name: 'Esakki', role: 'Trustee', bio: '', profileImageUrl: 'Esakki-Durai_01.jpeg' },
+            { id: 4, name: 'Venkatraman', role: 'Trustee', bio: '', profileImageUrl: '' },
+            { id: 5, name: 'Marimuthu', role: 'Trustee', bio: '', profileImageUrl: 'marimuthu.jpeg' },
+            { id: 6, name: 'Murugan', role: 'Trustee', bio: '', profileImageUrl: 'Murugan.jpeg' },
+            { id: 7, name: 'Murugesen', role: 'Trustee', bio: '', profileImageUrl: 'Murugesen.jpeg' }
+        ];
     }
 }

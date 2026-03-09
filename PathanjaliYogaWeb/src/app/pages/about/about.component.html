@@ -39,20 +39,42 @@
                     integrity</p>
             </div>
 
-            <div class="grid md:grid-cols-4 gap-8">
+            <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                 <!-- Render from backend -->
-                <div *ngFor="let trustee of trustees" class="group text-center">
-                    <div class="relative mb-6 overflow-hidden rounded-3xl aspect-[4/5] shadow-lg">
-                        <img [src]="trustee.profileImageUrl || 'https://i.pravatar.cc/400?u=' + trustee.id"
-                            class="w-full h-full object-cover grayscale transition-all group-hover:grayscale-0 group-hover:scale-105">
+                <div *ngFor="let trustee of trustees"
+                    class="group relative overflow-hidden rounded-[2rem] bg-white border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-500">
+                    <!-- Top colored Banner -->
+                    <div
+                        class="h-28 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent relative overflow-hidden">
                         <div
-                            class="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6 text-white">
-                            <p class="text-sm italic opacity-80">{{ trustee.bio }}</p>
+                            class="absolute -top-10 -right-10 w-32 h-32 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/30 transition-colors">
+                        </div>
+                        <div
+                            class="absolute -bottom-10 -left-10 w-32 h-32 bg-secondary/10 rounded-full blur-2xl group-hover:bg-secondary/20 transition-colors">
                         </div>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 group-hover:text-primary transition-colors">{{
-                        trustee.name }}</h3>
-                    <p class="text-secondary font-semibold">{{ trustee.role }}</p>
+
+                    <!-- Profile Image -->
+                    <div class="relative -mt-14 flex justify-center z-10 px-4">
+                        <div class="relative w-28 h-28">
+                            <div class="absolute inset-0 bg-white rounded-full shadow-md"></div>
+                            <img [src]="trustee.profileImageUrl || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y&s=400'"
+                                class="absolute inset-[4px] w-[calc(100%-8px)] h-[calc(100%-8px)] object-cover rounded-full z-10 group-hover:scale-105 transition-transform duration-500">
+                        </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="p-6 pt-5 text-center z-10 relative">
+                        <h3 class="text-xl font-bold text-gray-900 mb-1 group-hover:text-primary transition-colors">{{
+                            trustee.name }}</h3>
+                        <p class="text-xs font-bold text-secondary tracking-widest uppercase mb-4">{{ trustee.role }}
+                        </p>
+
+                        <div
+                            class="w-8 h-1 bg-gradient-to-r from-primary to-secondary mx-auto rounded-full mb-4 opacity-50 group-hover:opacity-100 transition-opacity">
+                        </div>
+                        <p *ngIf="trustee.bio" class="text-sm text-gray-500 italic">"{{ trustee.bio }}"</p>
+                    </div>
                 </div>
 
                 <!-- Placeholder if empty -->
