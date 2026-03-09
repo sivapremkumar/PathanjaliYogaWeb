@@ -13,7 +13,8 @@ module.exports = {
                 text: "#1A1A1A",
             },
             fontFamily: {
-                sans: ['Inter', 'Roboto', 'system-ui', 'sans-serif'],
+                sans: ['Montserrat', 'Inter', 'Roboto', 'system-ui', 'sans-serif'],
+                display: ['"Playfair Display"', 'serif'],
             }
         },
     },

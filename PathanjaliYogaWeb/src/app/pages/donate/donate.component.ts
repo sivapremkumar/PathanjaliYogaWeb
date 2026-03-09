@@ -35,7 +35,7 @@ export class DonateComponent {
             key: 'rzp_test_placeholder', // Use backend key in prod
             amount: this.donation.amount * 100,
             currency: "INR",
-            name: "Sri Padhanjaliyoga Trust",
+            name: "Sri Padhanjali Yoga Trust",
             description: "Donation for Welfare Programs",
             order_id: orderId,
             handler: (response: any) => {

@@ -1,6 +1,6 @@
 <section class="relative min-h-[85vh] flex items-center pt-24 overflow-hidden">
     <!-- Background Design -->
-    <div class="absolute top-0 right-0 -z-10 w-1/2 h-full bg-secondary/10 rounded-l-[100px] hidden md:block"></div>
+    <div class="absolute top-0 -right-10 -z-10 w-[55%] h-full bg-secondary/10 rounded-l-[100px] hidden md:block"></div>
     <div class="absolute top-1/4 right-20 -z-10 w-96 h-96 bg-accent/20 blur-[120px] rounded-full animate-pulse"></div>
 
     <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
@@ -10,7 +10,7 @@
                 <lucide-icon [name]="Heart" size="14"></lucide-icon>
                 Est. in Sankarankoil
             </span>
-            <h1 class="text-5xl md:text-7xl font-bold text-gray-900 leading-[1.1] mb-6">
+            <h1 class="text-4xl md:text-6xl font-display font-bold text-gray-900 leading-[1.1] mb-6 ">
                 Empowering Lives through <span class="text-primary italic">Yoga</span>
             </h1>
             <p class="text-lg text-gray-600 mb-10 leading-relaxed max-w-lg">
@@ -46,12 +46,13 @@
             </div>
         </div>
 
-        <div class="relative animate-fade-in opacity-0 hidden md:flex justify-end" style="animation-delay: 400ms;">
-            <div class="w-full max-w-lg group relative">
+        <div class="relative animate-fade-in opacity-0 hidden md:flex justify-center ml-12"
+            style="animation-delay: 400ms;">
+            <div class="w-full max-w-[800px] group relative">
                 <div
-                    class="absolute -top-10 -left-10 w-full h-full border-4 border-accent rounded-3xl -z-10 transition-transform group-hover:-translate-x-4 group-hover:-translate-y-4">
+                    class="absolute -top-14 -left-14 w-[110%] h-[110%] border-[2.5px] border-accent rounded-[2.5rem] -z-10 transition-transform group-hover:-translate-x-4 group-hover:-translate-y-4">
                 </div>
-                <div class="relative w-full h-[550px]">
+                <div class="relative w-full h-[500px]">
                     @for (img of images; track img; let i = $index) {
                     <img [src]="img" alt="Yoga Session"
                         class="absolute top-0 left-0 w-full h-full object-cover rounded-3xl shadow-2xl transition-all duration-1000 ease-in-out"

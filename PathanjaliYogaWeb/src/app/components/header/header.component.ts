@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { LucideAngularModule, Menu, X, Phone, Mail, Facebook, Instagram, Youtube } from 'lucide-angular';
+import { LucideAngularModule, Menu, X, Phone, Mail, Facebook, Instagram, Youtube, Heart } from 'lucide-angular';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -22,6 +22,7 @@ export class HeaderComponent implements OnInit {
     readonly Facebook = Facebook;
     readonly Instagram = Instagram;
     readonly Youtube = Youtube;
+    readonly Heart = Heart;
 
     constructor(private auth: AuthService) { }
 
