@@ -26,13 +26,15 @@ export class DonateComponent {
 
     onDonate() {
         this.api.createDonationOrder(this.donation).subscribe(res => {
-            this.payWithRazorpay(res.orderId);
+            this.api.getRazorpayKey().subscribe(keyRes => {
+                this.payWithRazorpay(res.orderId, keyRes.key);
+            });
         });
     }
 
-    payWithRazorpay(orderId: string) {
+    payWithRazorpay(orderId: string, razorpayKey: string) {
         const options = {
-            key: 'rzp_test_placeholder', // Use backend key in prod
+            key: razorpayKey,
             amount: this.donation.amount * 100,
             currency: "INR",
             name: "Sri Padhanjali Yoga Trust",

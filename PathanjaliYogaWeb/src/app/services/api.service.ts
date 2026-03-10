@@ -7,7 +7,7 @@ import { environment } from '../../environments/environment';
     providedIn: 'root'
 })
 export class ApiService {
-    private apiUrl = 'https://localhost:7082/api'; // Update port if different
+    private apiUrl = 'http://localhost:7082/api'; // Update port if different
 
     constructor(private http: HttpClient) { }
 
@@ -33,6 +33,10 @@ export class ApiService {
     }
 
     // Donations
+    getRazorpayKey(): Observable<any> {
+        return this.http.get(`${this.apiUrl}/Donation/key`);
+    }
+
     createDonationOrder(donation: any): Observable<any> {
         return this.http.post(`${this.apiUrl}/Donation/order`, donation);
     }
