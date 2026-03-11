@@ -17,10 +17,21 @@ const getNewsEvents = async (req, res) => {
 // @access  Private
 const createNewsEvent = async (req, res) => {
     try {
-        const { title, description, imagePath, date, type } = req.body;
-        const newsEvent = await NewsEvent.create({ title, description, imagePath, date, type });
+        const { title, description, imagePath, imageUrl, date, type } = req.body;
+        const finalImagePath = imagePath || imageUrl || '';
+        const finalDate = date || new Date();
+        const finalType = type || 'News';
+
+        const newsEvent = await NewsEvent.create({
+            title,
+            description,
+            imagePath: finalImagePath,
+            date: finalDate,
+            type: finalType
+        });
         res.status(201).json(newsEvent);
     } catch (error) {
+        console.error("News create error:", error);
         res.status(500).json({ message: 'Failed to create news/event' });
     }
 };

@@ -1,0 +1,10 @@
+[main ecc9f04] Clean up temporary log files
+ 6 files changed, 40 deletions(-)
+ delete mode 100644 PathanjaliYogaWeb/git_out2.txt
+ delete mode 100644 git_add.txt
+ delete mode 100644 git_out.txt
+ delete mode 100644 git_out_ignored.txt
+ delete mode 100644 git_push.bat
+ delete mode 100644 git_push_out.txt
+To https://github.com/sivapremkumar/PathanjaliYogaWeb.git
+   1c0159c..ecc9f04  main -> main

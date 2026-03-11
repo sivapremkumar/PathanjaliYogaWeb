@@ -1,0 +1,7 @@
+rm 'PathanjaliYogaWeb/git_out2.txt'
+rm 'git_add.txt'
+rm 'git_out.txt'
+rm 'git_out_ignored.txt'
+rm 'git_push.bat'
+rm 'git_push_out.txt'
+The batch file cannot be found.

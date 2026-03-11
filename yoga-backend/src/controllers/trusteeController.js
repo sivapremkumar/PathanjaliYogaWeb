@@ -17,10 +17,19 @@ const getTrustees = async (req, res) => {
 // @access  Private
 const createTrustee = async (req, res) => {
     try {
-        const { name, position, imageName, isActive } = req.body;
-        const trustee = await Trustee.create({ name, position, imageName, isActive });
+        const { name, role, position, imageUrl, imageName, isActive } = req.body;
+        const finalPosition = position || role || 'Trustee';
+        const finalImageName = imageName || imageUrl || '';
+
+        const trustee = await Trustee.create({
+            name,
+            position: finalPosition,
+            imageName: finalImageName,
+            isActive: isActive !== undefined ? isActive : true
+        });
         res.status(201).json(trustee);
     } catch (error) {
+        console.error("Trustee create error:", error);
         res.status(500).json({ message: 'Failed to create trustee' });
     }
 };
