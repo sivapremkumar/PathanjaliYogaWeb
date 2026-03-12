@@ -7,6 +7,12 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use App\Models\Donation;
 
 class DonationController {
+    // Return Razorpay public key
+    public function getRazorpayKey(Request $request, Response $response, $args) {
+        $key = getenv('RAZORPAY_KEY_ID') ?: '';
+        $response->getBody()->write(json_encode(['key' => $key]));
+        return $response->withHeader('Content-Type', 'application/json');
+    }
     public function index(Request $request, Response $response, $args) {
         $donations = Donation::all();
         $response->getBody()->write($donations->toJson());

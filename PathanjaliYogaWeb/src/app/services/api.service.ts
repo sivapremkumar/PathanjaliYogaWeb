@@ -7,7 +7,7 @@ import { environment } from '../../environments/environment';
     providedIn: 'root'
 })
 export class ApiService {
-    private apiUrl = 'http://localhost:7082/api'; // Update port if different
+    private apiUrl = environment.apiUrl;
 
     constructor(private http: HttpClient) { }
 
@@ -21,54 +21,55 @@ export class ApiService {
 
     // Trustees
     getTrustees(): Observable<any[]> {
-        return this.http.get<any[]>(`${this.apiUrl}/Trustee`);
+        return this.http.get<any[]>(`${this.apiUrl}/trustees`);
     }
 
     createTrustee(trustee: any): Observable<any> {
-        return this.http.post(`${this.apiUrl}/Trustee`, trustee, { headers: this.getHeaders() });
+        return this.http.post(`${this.apiUrl}/trustees`, trustee, { headers: this.getHeaders() });
     }
 
     deleteTrustee(id: number): Observable<any> {
-        return this.http.delete(`${this.apiUrl}/Trustee/${id}`, { headers: this.getHeaders() });
+        return this.http.delete(`${this.apiUrl}/trustees/${id}`, { headers: this.getHeaders() });
     }
 
     // Donations
-    getRazorpayKey(): Observable<any> {
-        return this.http.get(`${this.apiUrl}/Donation/key`);
-    }
-
     createDonationOrder(donation: any): Observable<any> {
-        return this.http.post(`${this.apiUrl}/Donation/order`, donation);
+        return this.http.post(`${this.apiUrl}/donations/order`, donation);
     }
 
     verifyPayment(payment: any): Observable<any> {
-        return this.http.post(`${this.apiUrl}/Donation/verify`, payment);
+        return this.http.post(`${this.apiUrl}/donations/verify`, payment);
     }
 
     getDonations(): Observable<any[]> {
-        return this.http.get<any[]>(`${this.apiUrl}/Donation`, { headers: this.getHeaders() });
+        return this.http.get<any[]>(`${this.apiUrl}/donations`, { headers: this.getHeaders() });
+    }
+
+    // Razorpay Key
+    getRazorpayKey(): Observable<any> {
+        return this.http.get(`${this.apiUrl}/donations/razorpay-key`);
     }
 
     // News
     getNews(): Observable<any[]> {
-        return this.http.get<any[]>(`${this.apiUrl}/NewsEvent`);
+        return this.http.get<any[]>(`${this.apiUrl}/news`);
     }
 
     createNews(item: any): Observable<any> {
-        return this.http.post(`${this.apiUrl}/NewsEvent`, item, { headers: this.getHeaders() });
+        return this.http.post(`${this.apiUrl}/news`, item, { headers: this.getHeaders() });
     }
 
     // Inquiries
     submitInquiry(inquiry: any): Observable<any> {
-        return this.http.post(`${this.apiUrl}/Inquiry`, inquiry);
+        return this.http.post(`${this.apiUrl}/inquiries`, inquiry);
     }
 
     getInquiries(): Observable<any[]> {
-        return this.http.get<any[]>(`${this.apiUrl}/Inquiry`, { headers: this.getHeaders() });
+        return this.http.get<any[]>(`${this.apiUrl}/inquiries`, { headers: this.getHeaders() });
     }
 
     // Admin Stats
     getAdminStats(): Observable<any> {
-        return this.http.get(`${this.apiUrl}/AdminDashboard/stats`, { headers: this.getHeaders() });
+        return this.http.get(`${this.apiUrl}/admin/stats`, { headers: this.getHeaders() });
     }
 }
