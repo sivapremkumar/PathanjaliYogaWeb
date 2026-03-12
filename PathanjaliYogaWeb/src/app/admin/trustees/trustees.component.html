@@ -1,14 +1,27 @@
 <div class="animate-fade-in">
-    <div class="flex justify-between items-center mb-8">
+    <div class="flex flex-wrap justify-between items-center mb-8 gap-4">
         <h2 class="text-3xl font-bold">Board of Trustees</h2>
-        <button (click)="showForm = !showForm" class="btn-primary shadow-xl shadow-primary/20">
-            <lucide-icon [name]="Plus" size="20"></lucide-icon>
-            Add Trustee
-        </button>
+        <div class="flex gap-3">
+            <button (click)="seedTrustees()" [disabled]="isSeeding"
+                class="btn-outline flex items-center gap-2 text-sm"
+                title="Import the 7 default trustees into the database">
+                <lucide-icon [name]="Database" size="18"></lucide-icon>
+                {{ isSeeding ? 'Importing…' : 'Import Defaults' }}
+            </button>
+            <button (click)="showForm = !showForm; editingTrustee = null" class="btn-primary shadow-xl shadow-primary/20">
+                <lucide-icon [name]="Plus" size="20"></lucide-icon>
+                Add Trustee
+            </button>
+        </div>
     </div>
 
+    <p *ngIf="seedMessage" class="mb-4 px-4 py-3 rounded-2xl bg-green-50 text-green-700 font-semibold text-sm">
+        {{ seedMessage }}
+    </p>
+
     <!-- Add Trustee Form -->
-    <div *ngIf="showForm" class="bg-white rounded-[24px] p-8 shadow-sm border border-gray-100 mb-8 animate-fade-in">
+    <div *ngIf="showForm && !editingTrustee"
+        class="bg-white rounded-[24px] p-8 shadow-sm border border-gray-100 mb-8 animate-fade-in">
         <h3 class="text-xl font-bold mb-6">New Trustee Details</h3>
         <form (ngSubmit)="addTrustee()" #trusteeForm="ngForm" class="space-y-6">
             <div class="grid md:grid-cols-2 gap-6">
@@ -23,53 +36,127 @@
                         class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 focus:border-primary outline-none transition-all">
                 </div>
                 <div class="md:col-span-2">
-                    <label
-                        class="block text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Description</label>
-                    <textarea [(ngModel)]="newTrustee.description" name="description" rows="3" required
+                    <label class="block text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Description</label>
+                    <textarea [(ngModel)]="newTrustee.description" name="description" rows="3"
                         class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 focus:border-primary outline-none transition-all"></textarea>
                 </div>
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Image
-                        URL</label>
-                    <input type="url" [(ngModel)]="newTrustee.imageUrl" name="imageUrl"
-                        placeholder="https://content.example.com/image.jpg"
-                        class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 focus:border-primary outline-none transition-all">
+                    <label class="block text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Photo</label>
+                    <!-- File upload -->
+                    <div class="flex items-start gap-6">
+                        <label class="flex flex-col items-center justify-center w-32 h-32 rounded-2xl border-2 border-dashed border-gray-200 cursor-pointer hover:border-primary transition-colors bg-gray-50 overflow-hidden flex-shrink-0">
+                            <img *ngIf="imagePreviewUrl" [src]="imagePreviewUrl" class="w-full h-full object-cover">
+                            <span *ngIf="!imagePreviewUrl" class="flex flex-col items-center gap-1 text-gray-400">
+                                <lucide-icon [name]="Upload" size="24"></lucide-icon>
+                                <span class="text-xs font-bold">Upload</span>
+                            </span>
+                            <input type="file" accept="image/*" class="hidden" (change)="onFileSelected($event)">
+                        </label>
+                        <div class="flex-grow">
+                            <p class="text-sm text-gray-500 mb-2">Upload from device <span class="text-gray-400">— or —</span></p>
+                            <input type="url" [(ngModel)]="newTrustee.imageUrl" name="imageUrl"
+                                placeholder="https://example.com/photo.jpg"
+                                [disabled]="!!selectedFile"
+                                class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-3 focus:border-primary outline-none transition-all text-sm disabled:opacity-40">
+                            <p *ngIf="selectedFile" class="mt-1 text-xs text-primary font-semibold">{{ selectedFile.name }}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="flex justify-end gap-4 mt-8">
-                <button type="button" (click)="showForm = false" class="btn-outline">Cancel</button>
-                <button type="submit" [disabled]="!trusteeForm.valid" class="btn-primary">Save Trustee</button>
+                <button type="button" (click)="showForm = false; selectedFile = null; imagePreviewUrl = null" class="btn-outline">Cancel</button>
+                <button type="submit" [disabled]="!trusteeForm.valid || isUploading" class="btn-primary flex items-center gap-2">
+                    <lucide-icon *ngIf="isUploading" [name]="Loader" size="18" class="animate-spin"></lucide-icon>
+                    {{ isUploading ? 'Saving…' : 'Save Trustee' }}
+                </button>
             </div>
         </form>
+    </div>
+
+    <!-- Edit Trustee Form -->
+    <div *ngIf="editingTrustee"
+        class="bg-white rounded-[24px] p-8 shadow-sm border border-primary/30 mb-8 animate-fade-in">
+        <h3 class="text-xl font-bold mb-6">Edit Trustee</h3>
+        <div class="grid md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Name</label>
+                <input type="text" [(ngModel)]="editingTrustee.name" name="edit-name"
+                    class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 focus:border-primary outline-none transition-all">
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Role</label>
+                <input type="text" [(ngModel)]="editingTrustee.role" name="edit-role"
+                    class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 focus:border-primary outline-none transition-all">
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Description</label>
+                <textarea [(ngModel)]="editingTrustee.description" name="edit-description" rows="3"
+                    class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 focus:border-primary outline-none transition-all"></textarea>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Photo</label>
+                <div class="flex items-start gap-6">
+                    <label class="flex flex-col items-center justify-center w-32 h-32 rounded-2xl border-2 border-dashed border-gray-200 cursor-pointer hover:border-primary transition-colors bg-gray-50 overflow-hidden flex-shrink-0">
+                        <img *ngIf="editPreviewUrl || editingTrustee.imageUrl" [src]="editPreviewUrl || editingTrustee.imageUrl" class="w-full h-full object-cover">
+                        <span *ngIf="!editPreviewUrl && !editingTrustee.imageUrl" class="flex flex-col items-center gap-1 text-gray-400">
+                            <lucide-icon [name]="Upload" size="24"></lucide-icon>
+                            <span class="text-xs font-bold">Change</span>
+                        </span>
+                        <input type="file" accept="image/*" class="hidden" (change)="onEditFileSelected($event)">
+                    </label>
+                    <div class="flex-grow">
+                        <p class="text-sm text-gray-500 mb-2">Upload new photo <span class="text-gray-400">— or —</span></p>
+                        <input type="url" [(ngModel)]="editingTrustee.imageUrl" name="edit-imageUrl"
+                            placeholder="https://example.com/photo.jpg"
+                            [disabled]="!!editFile"
+                            class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-3 focus:border-primary outline-none transition-all text-sm disabled:opacity-40">
+                        <p *ngIf="editFile" class="mt-1 text-xs text-primary font-semibold">{{ editFile.name }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="flex justify-end gap-4 mt-8">
+            <button type="button" (click)="cancelEdit()" class="btn-outline">Cancel</button>
+            <button type="button" (click)="saveEdit()" [disabled]="isUploading" class="btn-primary flex items-center gap-2">
+                <lucide-icon *ngIf="isUploading" [name]="Loader" size="18" class="animate-spin"></lucide-icon>
+                {{ isUploading ? 'Saving…' : 'Save Changes' }}
+            </button>
+        </div>
     </div>
 
     <!-- Trustees Grid -->
     <div class="grid md:grid-cols-2 gap-8">
         <div *ngFor="let t of trustees"
             class="bg-white rounded-[24px] p-6 shadow-sm border border-gray-100 flex gap-6 hover:shadow-md transition-shadow relative group">
-            <div
-                class="w-24 h-24 rounded-full bg-gray-100 flex-shrink-0 overflow-hidden border-4 border-white shadow-lg">
+            <div class="w-24 h-24 rounded-full bg-gray-100 flex-shrink-0 overflow-hidden border-4 border-white shadow-lg">
                 <img *ngIf="t.imageUrl" [src]="t.imageUrl" class="w-full h-full object-cover">
                 <div *ngIf="!t.imageUrl"
                     class="w-full h-full flex items-center justify-center text-gray-400 font-bold text-2xl">
-                    {{t.name.charAt(0)}}
+                    {{ t.name.charAt(0) }}
                 </div>
             </div>
             <div class="flex-grow">
-                <h3 class="text-xl font-bold text-gray-900">{{t.name}}</h3>
-                <div class="text-sm font-bold text-primary mb-3">{{t.role}}</div>
-                <p class="text-gray-500 text-sm line-clamp-2">{{t.description}}</p>
+                <h3 class="text-xl font-bold text-gray-900">{{ t.name }}</h3>
+                <div class="text-sm font-bold text-primary mb-3">{{ t.role }}</div>
+                <p class="text-gray-500 text-sm line-clamp-2">{{ t.description }}</p>
             </div>
 
-            <button (click)="deleteTrustee(t.id)"
-                class="absolute top-4 right-4 w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white">
-                <lucide-icon [name]="Trash2" size="18"></lucide-icon>
-            </button>
+            <!-- Action buttons (visible on hover) -->
+            <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button (click)="editTrustee(t); showForm = false"
+                    class="w-10 h-10 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center hover:bg-blue-500 hover:text-white transition-colors">
+                    <lucide-icon [name]="Edit" size="18"></lucide-icon>
+                </button>
+                <button (click)="deleteTrustee(t.id)"
+                    class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors">
+                    <lucide-icon [name]="Trash2" size="18"></lucide-icon>
+                </button>
+            </div>
         </div>
 
-        <div *ngIf="trustees.length === 0 && !showForm"
+        <div *ngIf="trustees.length === 0 && !showForm && !editingTrustee"
             class="md:col-span-2 text-center p-12 text-gray-400 font-bold italic bg-white rounded-[24px] border border-gray-100">
-            No trustees found. Add one to get started.
+            No trustees found. Click "Import Defaults" to load existing trustees or "Add Trustee" to create one.
         </div>
     </div>
 </div>

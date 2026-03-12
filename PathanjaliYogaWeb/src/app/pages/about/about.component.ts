@@ -20,23 +20,18 @@ export class AboutComponent implements OnInit {
     constructor(private api: ApiService) { }
 
     ngOnInit() {
+        this.loadDefaultTrustees(); // show static data immediately
         this.api.getTrustees().subscribe(
-            res => {
+            (res: any[]) => {
                 if (res && res.length > 0) {
-                    this.trustees = res;
-                } else {
-                    this.loadDefaultTrustees();
+                    this.trustees = res.map(t => ({
+                        ...t,
+                        profileImageUrl: t.image_url || t.imageUrl || t.profileImageUrl || null
+                    }));
                 }
             },
-            err => {
-                this.loadDefaultTrustees();
-            }
+            () => { /* keep static fallback already loaded */ }
         );
-
-        // Load defaults immediately in case API takes time or fails
-        if (this.trustees.length === 0) {
-            this.loadDefaultTrustees();
-        }
     }
 
     loadDefaultTrustees() {

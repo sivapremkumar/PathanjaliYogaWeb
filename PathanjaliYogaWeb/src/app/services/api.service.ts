@@ -32,6 +32,23 @@ export class ApiService {
         return this.http.delete(`${this.apiUrl}/trustees/${id}`, { headers: this.getHeaders() });
     }
 
+    updateTrustee(id: number, data: any): Observable<any> {
+        return this.http.put(`${this.apiUrl}/trustees/${id}`, data, { headers: this.getHeaders() });
+    }
+
+    uploadTrusteeImage(file: File): Observable<any> {
+        const token = localStorage.getItem('yoga_token');
+        const formData = new FormData();
+        formData.append('image', file);
+        return this.http.post(`${this.apiUrl}/trustees/upload`, formData, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+    }
+
+    seedTrustees(): Observable<any> {
+        return this.http.get(`${this.apiUrl}/trustees/seed`, { headers: this.getHeaders() });
+    }
+
     // Donations
     createDonationOrder(donation: any): Observable<any> {
         return this.http.post(`${this.apiUrl}/donations/order`, donation);

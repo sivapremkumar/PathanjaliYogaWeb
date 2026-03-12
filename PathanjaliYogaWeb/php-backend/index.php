@@ -132,15 +132,48 @@ if (!$frameworkReady) {
         return is_array($data) ? $data : [];
     };
 
+    if ($method === 'GET' && ($path === '/api/trustees/seed' || $path === '/trustees/seed')) {
+        $defaults = [
+            ['name' => 'Jeyaram',     'role' => 'President', 'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/jeyaram.jpeg'],
+            ['name' => 'Kasimani',    'role' => 'Trustee',   'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/kasimani.jpeg'],
+            ['name' => 'Esakki',      'role' => 'Trustee',   'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/Esakki-Durai_01.jpeg'],
+            ['name' => 'Venkatraman', 'role' => 'Trustee',   'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/Venkatraman.jpeg'],
+            ['name' => 'Marimuthu',   'role' => 'Trustee',   'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/marimuthu.jpeg'],
+            ['name' => 'Murugan',     'role' => 'Trustee',   'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/Murugan.jpeg'],
+            ['name' => 'Murugesen',   'role' => 'Trustee',   'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/Murugesen.jpeg'],
+        ];
+        $mysqli = $connectDb();
+        if (!$mysqli) { exit; }
+        $inserted = 0;
+        foreach ($defaults as $d) {
+            $chk = $mysqli->prepare('SELECT id FROM trustees WHERE name = ? LIMIT 1');
+            $chk->bind_param('s', $d['name']);
+            $chk->execute();
+            $chk->store_result();
+            if ($chk->num_rows === 0) {
+                $ins = $mysqli->prepare('INSERT INTO trustees (name, role, description, image_url) VALUES (?, ?, ?, ?)');
+                $ins->bind_param('ssss', $d['name'], $d['role'], $d['description'], $d['image_url']);
+                $ins->execute();
+                $ins->close();
+                $inserted++;
+            }
+            $chk->close();
+        }
+        $mysqli->close();
+        $sendJson(200, ['inserted' => $inserted, 'total' => count($defaults)]);
+        exit;
+    }
+
     if ($method === 'GET' && ($path === '/api/trustees' || $path === '/trustees')) {
         $mysqli = $connectDb();
         if (!$mysqli) {
             exit;
         }
         $rows = [];
-        $result = $mysqli->query('SELECT id, name, role, description, image_url, created_at, updated_at FROM trustees ORDER BY id DESC');
+        $result = $mysqli->query('SELECT id, name, role, description, image_url, created_at, updated_at FROM trustees ORDER BY id ASC');
         if ($result) {
             while ($row = $result->fetch_assoc()) {
+                $row['imageUrl'] = $row['image_url'];
                 $rows[] = $row;
             }
             $result->free();
@@ -150,12 +183,40 @@ if (!$frameworkReady) {
         exit;
     }
 
+    if ($method === 'POST' && ($path === '/api/trustees/upload' || $path === '/trustees/upload')) {
+        $file = $_FILES['image'] ?? null;
+        if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+            $sendJson(400, ['error' => 'No valid file uploaded']);
+            exit;
+        }
+        if ($file['size'] > 5 * 1024 * 1024) {
+            $sendJson(400, ['error' => 'File exceeds 5 MB limit']);
+            exit;
+        }
+        $allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        $mime = mime_content_type($file['tmp_name']);
+        if (!in_array($mime, $allowed, true)) {
+            $sendJson(400, ['error' => 'Unsupported file type']);
+            exit;
+        }
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $safeName = bin2hex(random_bytes(8)) . '.' . $ext;
+        $uploadDir = __DIR__ . '/uploads/trustees/';
+        if (!is_dir($uploadDir)) { mkdir($uploadDir, 0775, true); }
+        if (!move_uploaded_file($file['tmp_name'], $uploadDir . $safeName)) {
+            $sendJson(500, ['error' => 'Failed to save file']);
+            exit;
+        }
+        $sendJson(200, ['url' => '/api/uploads/trustees/' . $safeName]);
+        exit;
+    }
+
     if ($method === 'POST' && ($path === '/api/trustees' || $path === '/trustees')) {
         $data = $readJson();
         $name = trim((string)($data['name'] ?? ''));
         $role = trim((string)($data['role'] ?? 'Trustee'));
         $description = (string)($data['description'] ?? '');
-        $imageUrl = (string)($data['image_url'] ?? '');
+        $imageUrl = (string)($data['imageUrl'] ?? $data['image_url'] ?? '');
         if ($name === '') {
             $sendJson(400, ['error' => 'Name is required']);
             exit;
@@ -182,9 +243,46 @@ if (!$frameworkReady) {
         }
         $rowResult = $mysqli->query('SELECT id, name, role, description, image_url, created_at, updated_at FROM trustees WHERE id = ' . $newId . ' LIMIT 1');
         $row = $rowResult ? $rowResult->fetch_assoc() : ['id' => $newId, 'name' => $name, 'role' => $role, 'description' => $description, 'image_url' => $imageUrl];
-        if ($rowResult) {
-            $rowResult->free();
+        if ($rowResult) { $rowResult->free(); }
+        if ($row) { $row['imageUrl'] = $row['image_url']; }
+        $mysqli->close();
+        $sendJson(200, $row);
+        exit;
+    }
+
+    if (in_array($method, ['PUT', 'PATCH']) && preg_match('#^/(api/)?trustees/(\d+)$#', $path, $m)) {
+        $id = (int)$m[2];
+        $data = $readJson();
+        $mysqli = $connectDb();
+        if (!$mysqli) { exit; }
+        $chk = $mysqli->query('SELECT id FROM trustees WHERE id = ' . $id . ' LIMIT 1');
+        if (!$chk || $chk->num_rows === 0) {
+            if ($chk) { $chk->free(); }
+            $mysqli->close();
+            $sendJson(404, ['success' => false, 'error' => 'Not found']);
+            exit;
         }
+        $chk->free();
+        $fields = [];
+        $types = '';
+        $vals = [];
+        $imageUrl = $data['imageUrl'] ?? $data['image_url'] ?? null;
+        if (isset($data['name']))        { $fields[] = 'name = ?';        $types .= 's'; $vals[] = $data['name']; }
+        if (isset($data['role']))        { $fields[] = 'role = ?';        $types .= 's'; $vals[] = $data['role']; }
+        if (isset($data['description'])) { $fields[] = 'description = ?'; $types .= 's'; $vals[] = $data['description']; }
+        if ($imageUrl !== null)           { $fields[] = 'image_url = ?';   $types .= 's'; $vals[] = $imageUrl; }
+        if (!empty($fields)) {
+            $vals[] = $id;
+            $types .= 'i';
+            $stmt = $mysqli->prepare('UPDATE trustees SET ' . implode(', ', $fields) . ' WHERE id = ?');
+            $stmt->bind_param($types, ...$vals);
+            $stmt->execute();
+            $stmt->close();
+        }
+        $rowResult = $mysqli->query('SELECT id, name, role, description, image_url, created_at, updated_at FROM trustees WHERE id = ' . $id . ' LIMIT 1');
+        $row = $rowResult ? $rowResult->fetch_assoc() : ['id' => $id];
+        if ($rowResult) { $rowResult->free(); }
+        if ($row) { $row['imageUrl'] = $row['image_url']; }
         $mysqli->close();
         $sendJson(200, $row);
         exit;
