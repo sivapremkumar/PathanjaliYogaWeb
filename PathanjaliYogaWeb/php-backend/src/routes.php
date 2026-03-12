@@ -6,6 +6,8 @@ return function (App $app) {
     // Auth routes
     $app->post('/api/auth/login', 'App\\Controllers\\AuthController:login');
     $app->post('/api/auth/logout', 'App\\Controllers\\AuthController:logout');
+    $app->post('/auth/login', 'App\\Controllers\\AuthController:login');
+    $app->post('/auth/logout', 'App\\Controllers\\AuthController:logout');
 
     // Admin Login Page (simple HTML for demonstration)
     $app->get('/admin/login', function ($request, $response, $args) {
@@ -18,21 +20,33 @@ return function (App $app) {
     $app->get('/api/trustees', 'App\\Controllers\\TrusteeController:index');
     $app->post('/api/trustees', 'App\\Controllers\\TrusteeController:create');
     $app->delete('/api/trustees/{id}', 'App\\Controllers\\TrusteeController:delete');
+    $app->get('/trustees', 'App\\Controllers\\TrusteeController:index');
+    $app->post('/trustees', 'App\\Controllers\\TrusteeController:create');
+    $app->delete('/trustees/{id}', 'App\\Controllers\\TrusteeController:delete');
 
     // Donations
     $app->get('/api/donations', 'App\\Controllers\\DonationController:index');
     $app->get('/api/donations/razorpay-key', 'App\\Controllers\\DonationController:getRazorpayKey');
     $app->post('/api/donations/order', 'App\\Controllers\\DonationController:createOrder');
     $app->post('/api/donations/verify', 'App\\Controllers\\DonationController:verify');
+    $app->get('/donations', 'App\\Controllers\\DonationController:index');
+    $app->get('/donations/razorpay-key', 'App\\Controllers\\DonationController:getRazorpayKey');
+    $app->post('/donations/order', 'App\\Controllers\\DonationController:createOrder');
+    $app->post('/donations/verify', 'App\\Controllers\\DonationController:verify');
 
     // News & Events
     $app->get('/api/news', 'App\\Controllers\\NewsEventController:index');
     $app->post('/api/news', 'App\\Controllers\\NewsEventController:create');
+    $app->get('/news', 'App\\Controllers\\NewsEventController:index');
+    $app->post('/news', 'App\\Controllers\\NewsEventController:create');
 
     // Inquiries
     $app->post('/api/inquiries', 'App\\Controllers\\InquiryController:create');
     $app->get('/api/inquiries', 'App\\Controllers\\InquiryController:index');
+    $app->post('/inquiries', 'App\\Controllers\\InquiryController:create');
+    $app->get('/inquiries', 'App\\Controllers\\InquiryController:index');
 
     // Admin Dashboard
     $app->get('/api/admin/stats', 'App\\Controllers\\AdminDashboardController:stats');
+    $app->get('/admin/stats', 'App\\Controllers\\AdminDashboardController:stats');
 };
