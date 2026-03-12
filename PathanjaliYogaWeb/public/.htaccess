@@ -1,6 +1,9 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
+  # Let backend API routes be handled by /api folder rules
+  RewriteRule ^api(/|$) - [L]
+
   # If an existing asset or directory is requested go to it as it is
   RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -f [OR]
   RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -d
