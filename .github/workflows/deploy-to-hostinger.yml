@@ -47,6 +47,7 @@ jobs:
 
         
     - name: Deploy to Hostinger via FTP
+      continue-on-error: true
       env:
         FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
         FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
