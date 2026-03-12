@@ -3,11 +3,26 @@
 use Slim\App;
 
 return function (App $app) {
+    // Allow OPTIONS for API clients and preflight requests.
+    $app->options('/{routes:.+}', function ($request, $response) {
+        return $response;
+    });
+
     // Auth routes
     $app->post('/api/auth/login', 'App\\Controllers\\AuthController:login');
     $app->post('/api/auth/logout', 'App\\Controllers\\AuthController:logout');
     $app->post('/auth/login', 'App\\Controllers\\AuthController:login');
     $app->post('/auth/logout', 'App\\Controllers\\AuthController:logout');
+
+    // Helpful GET responses (avoids fatal 405 when opening login URL directly in browser)
+    $app->get('/api/auth/login', function ($request, $response) {
+        $response->getBody()->write(json_encode(['message' => 'Use POST /api/auth/login']));
+        return $response->withHeader('Content-Type', 'application/json');
+    });
+    $app->get('/auth/login', function ($request, $response) {
+        $response->getBody()->write(json_encode(['message' => 'Use POST /auth/login']));
+        return $response->withHeader('Content-Type', 'application/json');
+    });
 
     // Admin Login Page (simple HTML for demonstration)
     $app->get('/admin/login', function ($request, $response, $args) {
