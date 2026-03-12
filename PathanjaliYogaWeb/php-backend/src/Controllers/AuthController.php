@@ -22,7 +22,14 @@ class AuthController {
             error_log("Parsed - Username: $username, Password length: " . strlen($password));
             
             if (!$username || !$password) {
-                $response->getBody()->write(json_encode(['error' => 'Username and password required', 'received' => ['username' => $username, 'password' => strlen($password) > 0 ? 'provided' : 'missing']]));
+                $response->getBody()->write(json_encode([
+                    'error' => 'Username and password required',
+                    'debug' => [
+                        'received_username' => $username,
+                        'password_length' => strlen($password),
+                        'body_raw' => $body
+                    ]
+                ]));
                 return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
             }
             
