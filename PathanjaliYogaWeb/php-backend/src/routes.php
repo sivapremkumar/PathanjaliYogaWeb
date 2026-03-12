@@ -15,11 +15,11 @@ return function (App $app) {
             // Test database connection
             $result = \Illuminate\Database\Capsule\Manager::connection()->select('SELECT 1');
             $response->getBody()->write(json_encode(['status' => 'ok', 'database' => 'connected']));
-        } catch (\Exception $e) {
-            $response->getBody()->write(json_encode(['status' => 'error', 'database' => 'disconnected', 'error' => $e->getMessage()]));
-            return $response->withStatus(500);
-        }
-        return $response->withHeader('Content-Type', 'application/json');
+    // Database test endpoint
+    $app->get('/test-db', function ($request, $response) {
+        require __DIR__ . '/../test-db.php';
+        return $response;
+    });
     });
 
     // Allow OPTIONS for API clients and preflight requests.
