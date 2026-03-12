@@ -7,6 +7,17 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use App\Models\NewsEvent;
 
 class NewsEventController {
+    private function readPayload(Request $request): array {
+        $data = (array)$request->getParsedBody();
+        if (!empty($data)) {
+            return $data;
+        }
+
+        $raw = (string)$request->getBody();
+        $decoded = json_decode($raw, true);
+        return is_array($decoded) ? $decoded : [];
+    }
+
     public function index(Request $request, Response $response, $args) {
         $news = NewsEvent::orderBy('id', 'desc')->get()->map(function ($item) {
             $imageUrl = filter_var($item->location, FILTER_VALIDATE_URL) ? $item->location : null;
@@ -30,7 +41,7 @@ class NewsEventController {
     }
 
     public function create(Request $request, Response $response, $args) {
-        $data = (array)$request->getParsedBody();
+        $data = $this->readPayload($request);
 
         $news = NewsEvent::create([
             'title' => $data['title'] ?? '',
