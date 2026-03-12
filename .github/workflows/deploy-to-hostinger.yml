@@ -34,16 +34,6 @@ jobs:
         cd PathanjaliYogaWeb
         npm run build -- --configuration production
 
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.3'
-        tools: composer
-
-    - name: Install PHP backend dependencies
-      run: |
-        cd PathanjaliYogaWeb/php-backend
-        composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --ignore-platform-reqs || composer update --no-dev --prefer-dist --optimize-autoloader --no-interaction --ignore-platform-reqs
         
     - name: Deploy to Hostinger via FTP
       env:
@@ -87,7 +77,6 @@ jobs:
           **/.git*
           **/.git*/**
           **/node_modules/**
-        dangerous-clean-slate: true
-        state-name: .ftp-deploy-sync-state-backend-force.json
+        dangerous-clean-slate: false
         log-level: standard
         security: loose
