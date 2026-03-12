@@ -12,6 +12,85 @@ if (file_exists(__DIR__ . '/.env')) {
     }
 }
 
+// Fallback mode: keep login endpoint alive even if vendor dependencies are missing.
+if (!file_exists(__DIR__ . '/vendor/autoload.php')) {
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization');
+    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+
+    $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+    $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+
+    $sendJson = function (int $status, array $data): void {
+        http_response_code($status);
+        header('Content-Type: application/json');
+        echo json_encode($data);
+    };
+
+    if ($method === 'OPTIONS') {
+        http_response_code(204);
+        exit;
+    }
+
+    if ($method === 'GET' && ($path === '/api/auth/login' || $path === '/auth/login')) {
+        $sendJson(200, ['message' => 'Use POST /api/auth/login']);
+        exit;
+    }
+
+    if ($method === 'POST' && ($path === '/api/auth/login' || $path === '/auth/login')) {
+        $raw = file_get_contents('php://input');
+        $data = json_decode($raw ?: '{}', true);
+        if (!is_array($data)) {
+            $data = [];
+        }
+
+        $username = trim((string)($data['username'] ?? ''));
+        $password = (string)($data['password'] ?? '');
+
+        if ($username === '' || $password === '') {
+            $sendJson(400, ['error' => 'Username and password required']);
+            exit;
+        }
+
+        $dbHost = getenv('DB_HOST') ?: 'localhost';
+        $dbName = getenv('DB_DATABASE') ?: '';
+        $dbUser = getenv('DB_USERNAME') ?: '';
+        $dbPass = getenv('DB_PASSWORD') ?: '';
+
+        $mysqli = @new mysqli($dbHost, $dbUser, $dbPass, $dbName);
+        if ($mysqli->connect_error) {
+            $sendJson(500, ['error' => 'Database connection failed']);
+            exit;
+        }
+
+        $stmt = $mysqli->prepare('SELECT id, username, password_hash FROM admin_users WHERE username = ? LIMIT 1');
+        if (!$stmt) {
+            $mysqli->close();
+            $sendJson(500, ['error' => 'Query preparation failed']);
+            exit;
+        }
+
+        $stmt->bind_param('s', $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $user = $result ? $result->fetch_assoc() : null;
+        $stmt->close();
+        $mysqli->close();
+
+        if (!$user || !password_verify($password, (string)$user['password_hash'])) {
+            $sendJson(401, ['error' => 'Invalid credentials']);
+            exit;
+        }
+
+        $token = base64_encode(random_bytes(24));
+        $sendJson(200, ['token' => $token, 'username' => $user['username']]);
+        exit;
+    }
+
+    $sendJson(503, ['error' => 'Backend dependencies not installed']);
+    exit;
+}
+
 require __DIR__ . '/vendor/autoload.php';
 require __DIR__ . '/bootstrap.php';
 
