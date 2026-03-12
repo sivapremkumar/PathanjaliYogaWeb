@@ -89,6 +89,8 @@ jobs:
           **/.git*
           **/.git*/**
           **/node_modules/**
+          vendor/**
+          vendor
         dangerous-clean-slate: false
         log-level: standard
         security: loose
