@@ -59,6 +59,10 @@ export class ApiService {
         return this.http.post(`${this.apiUrl}/news`, item, { headers: this.getHeaders() });
     }
 
+    deleteNews(id: number): Observable<any> {
+        return this.http.delete(`${this.apiUrl}/news/${id}`, { headers: this.getHeaders() });
+    }
+
     // Inquiries
     submitInquiry(inquiry: any): Observable<any> {
         return this.http.post(`${this.apiUrl}/inquiries`, inquiry);

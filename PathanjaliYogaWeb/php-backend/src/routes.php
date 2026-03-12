@@ -71,8 +71,10 @@ return function (App $app) {
     // News & Events
     $app->get('/api/news', 'App\\Controllers\\NewsEventController:index');
     $app->post('/api/news', 'App\\Controllers\\NewsEventController:create');
+    $app->delete('/api/news/{id}', 'App\\Controllers\\NewsEventController:delete');
     $app->get('/news', 'App\\Controllers\\NewsEventController:index');
     $app->post('/news', 'App\\Controllers\\NewsEventController:create');
+    $app->delete('/news/{id}', 'App\\Controllers\\NewsEventController:delete');
 
     // Inquiries
     $app->post('/api/inquiries', 'App\\Controllers\\InquiryController:create');

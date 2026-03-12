@@ -19,17 +19,30 @@ export class NewsComponent implements OnInit {
 
     constructor(private api: ApiService) { }
 
+    private normalizeItem(item: any) {
+        const imageUrl = item.imageUrl ?? item.image_url ?? ((typeof item.location === 'string' && item.location.startsWith('http')) ? item.location : '');
+
+        return {
+            id: item.id,
+            title: item.title ?? '',
+            content: item.content ?? item.description ?? '',
+            date: item.date ?? item.created_at ?? new Date(),
+            location: imageUrl ? null : (item.location ?? null),
+            imageUrl,
+            isEvent: item.isEvent ?? item.is_event ?? false,
+        };
+    }
+
     ngOnInit() {
         this.api.getNews().subscribe(res => {
-            this.newsItems = res;
-        });
+            this.newsItems = res.map(item => this.normalizeItem(item));
 
-        // Mock data if empty
-        if (this.newsItems.length === 0) {
-            this.newsItems = [
-                { id: 1, title: 'Yoga Workshop for Seniors', content: 'A weekend workshop for elderly community member to learn gentle yoga.', date: new Date(), location: 'Sankarankoil Center', isEvent: true },
-                { id: 2, title: 'Donation Drive Success', content: 'Huge thanks to everyone who participated in our recent food drive.', date: new Date(), location: 'Main Office', isEvent: false }
-            ];
-        }
+            if (this.newsItems.length === 0) {
+                this.newsItems = [
+                    { id: 1, title: 'Yoga Workshop for Seniors', content: 'A weekend workshop for elderly community member to learn gentle yoga.', date: new Date(), location: 'Sankarankoil Center', imageUrl: '', isEvent: true },
+                    { id: 2, title: 'Donation Drive Success', content: 'Huge thanks to everyone who participated in our recent food drive.', date: new Date(), location: 'Main Office', imageUrl: '', isEvent: false }
+                ];
+            }
+        });
     }
 }

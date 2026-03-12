@@ -232,10 +232,10 @@ if (!$frameworkReady) {
     if ($method === 'POST' && ($path === '/api/news' || $path === '/news')) {
         $data = $readJson();
         $title = trim((string)($data['title'] ?? ''));
-        $content = (string)($data['content'] ?? '');
+        $content = (string)($data['content'] ?? ($data['description'] ?? ''));
         $isEvent = !empty($data['is_event']) ? 1 : 0;
         $date = (string)($data['date'] ?? null);
-        $location = (string)($data['location'] ?? '');
+        $location = (string)($data['location'] ?? ($data['imageUrl'] ?? ''));
         if ($title === '') {
             $sendJson(400, ['error' => 'Title is required']);
             exit;
@@ -267,6 +267,27 @@ if (!$frameworkReady) {
         }
         $mysqli->close();
         $sendJson(200, $row);
+        exit;
+    }
+
+    if ($method === 'DELETE' && preg_match('#^/(api/)?news/(\d+)$#', $path, $m)) {
+        $id = (int)$m[2];
+        $mysqli = $connectDb();
+        if (!$mysqli) {
+            exit;
+        }
+        $stmt = $mysqli->prepare('DELETE FROM news WHERE id = ?');
+        if (!$stmt) {
+            $mysqli->close();
+            $sendJson(500, ['error' => 'Query preparation failed']);
+            exit;
+        }
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $affected = $stmt->affected_rows;
+        $stmt->close();
+        $mysqli->close();
+        $sendJson(200, $affected > 0 ? ['success' => true] : ['success' => false, 'error' => 'Not found']);
         exit;
     }
 
