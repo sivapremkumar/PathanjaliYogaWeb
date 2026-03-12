@@ -76,6 +76,7 @@ jobs:
           **/.git*
           **/.git*/**
           **/node_modules/**
-        dangerous-clean-slate: false
+        dangerous-clean-slate: true
+        state-name: .ftp-deploy-sync-state-backend-force.json
         log-level: standard
         security: loose
