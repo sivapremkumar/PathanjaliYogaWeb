@@ -12,8 +12,21 @@ if (file_exists(__DIR__ . '/.env')) {
     }
 }
 
-// Fallback mode: keep login endpoint alive even if vendor dependencies are missing.
-if (!file_exists(__DIR__ . '/vendor/autoload.php')) {
+// Fallback mode: keep core APIs alive if Composer vendor is missing or inconsistent.
+$autoloadPath = __DIR__ . '/vendor/autoload.php';
+$autoloadRealPath = __DIR__ . '/vendor/composer/autoload_real.php';
+$frameworkReady = false;
+if (file_exists($autoloadPath) && file_exists($autoloadRealPath)) {
+    $autoloadContents = @file_get_contents($autoloadPath);
+    $autoloadRealContents = @file_get_contents($autoloadRealPath);
+    if ($autoloadContents !== false && $autoloadRealContents !== false) {
+        if (preg_match('/ComposerAutoloaderInit[0-9a-f]+/', $autoloadContents, $m) === 1) {
+            $frameworkReady = strpos($autoloadRealContents, $m[0]) !== false;
+        }
+    }
+}
+
+if (!$frameworkReady) {
     header('Access-Control-Allow-Origin: *');
     header('Access-Control-Allow-Headers: Content-Type, Authorization');
     header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
