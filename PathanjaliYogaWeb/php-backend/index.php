@@ -16,11 +16,36 @@ require __DIR__ . '/vendor/autoload.php';
 require __DIR__ . '/bootstrap.php';
 
 use Slim\Factory\AppFactory;
+use Slim\Exception\HttpNotFoundException;
+use Psr\Log\LogLevel;
 
 $app = AppFactory::create();
 
-// Return clean HTTP errors instead of uncaught fatal stack traces.
-$app->addErrorMiddleware(false, true, true);
+// Custom error handler that returns JSON
+$errorMiddleware = $app->addErrorMiddleware(false, true, true);
+$errorMiddleware->setDefaultErrorHandler(function ($request, $exception, $displayErrorDetails) {
+    $response = new \Slim\Psr7\Response();
+    $statusCode = 500;
+    
+    if ($exception instanceof HttpNotFoundException) {
+        $statusCode = 404;
+        $error = 'Route not found';
+    } else if ($exception instanceof \Slim\Exception\HttpMethodNotAllowedException) {
+        $statusCode = 405;
+        $error = 'Method not allowed';
+    } else {
+        $error = $displayErrorDetails ? $exception->getMessage() : 'Application error';
+    }
+    
+    $response->getBody()->write(json_encode([
+        'error' => $error,
+        'status' => $statusCode
+    ]));
+    
+    return $response
+        ->withStatus($statusCode)
+        ->withHeader('Content-Type', 'application/json');
+});
 
 // Basic CORS headers for frontend API requests.
 $app->add(function ($request, $handler) {
