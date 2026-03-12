@@ -10,24 +10,36 @@ use Firebase\JWT\Key;
 
 class AuthController {
     public function login(Request $request, Response $response, $args) {
-        $data = (array)$request->getParsedBody();
-        $username = $data['username'] ?? '';
-        $password = $data['password'] ?? '';
-        $user = AdminUser::where('username', $username)->first();
-        if ($user && password_verify($password, $user->password_hash)) {
-            $payload = [
-                'sub' => $user->id,
-                'username' => $user->username,
-                'iat' => time(),
-                'exp' => time() + 86400 // 1 day
-            ];
-            $jwt = JWT::encode($payload, getenv('JWT_SECRET'), 'HS256');
-            $response->getBody()->write(json_encode(['token' => $jwt, 'username' => $user->username]));
-        } else {
-            $response->getBody()->write(json_encode(['error' => 'Invalid credentials']));
-            return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
+        try {
+            $data = (array)$request->getParsedBody();
+            $username = $data['username'] ?? '';
+            $password = $data['password'] ?? '';
+            
+            if (!$username || !$password) {
+                $response->getBody()->write(json_encode(['error' => 'Username and password required']));
+                return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+            }
+            
+            $user = AdminUser::where('username', $username)->first();
+            
+            if ($user && password_verify($password, $user->password_hash)) {
+                $payload = [
+                    'sub' => $user->id,
+                    'username' => $user->username,
+                    'iat' => time(),
+                    'exp' => time() + 86400 // 1 day
+                ];
+                $jwt = JWT::encode($payload, getenv('JWT_SECRET'), 'HS256');
+                $response->getBody()->write(json_encode(['token' => $jwt, 'username' => $user->username]));
+            } else {
+                $response->getBody()->write(json_encode(['error' => 'Invalid credentials']));
+                return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
+            }
+            return $response->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode(['error' => 'Login failed: ' . $e->getMessage()]));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
         }
-        return $response->withHeader('Content-Type', 'application/json');
     }
 
     public function logout(Request $request, Response $response, $args) {
