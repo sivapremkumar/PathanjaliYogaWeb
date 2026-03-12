@@ -11,16 +11,24 @@ use Firebase\JWT\Key;
 class AuthController {
     public function login(Request $request, Response $response, $args) {
         try {
-            $data = (array)$request->getParsedBody();
+            // Debug: Log the request
+            $body = $request->getBody()->getContents();
+            error_log("Login Request Body: " . $body);
+            
+            $data = json_decode($body, true) ?: [];
             $username = $data['username'] ?? '';
             $password = $data['password'] ?? '';
             
+            error_log("Parsed - Username: $username, Password length: " . strlen($password));
+            
             if (!$username || !$password) {
-                $response->getBody()->write(json_encode(['error' => 'Username and password required']));
+                $response->getBody()->write(json_encode(['error' => 'Username and password required', 'received' => ['username' => $username, 'password' => strlen($password) > 0 ? 'provided' : 'missing']]));
                 return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
             }
             
+            error_log("Querying for user: $username");
             $user = AdminUser::where('username', $username)->first();
+            error_log("User found: " . ($user ? 'yes' : 'no'));
             
             if ($user && password_verify($password, $user->password_hash)) {
                 $payload = [
@@ -37,6 +45,7 @@ class AuthController {
             }
             return $response->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
+            error_log("Login Exception: " . $e->getMessage());
             $response->getBody()->write(json_encode(['error' => 'Login failed: ' . $e->getMessage()]));
             return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
         }
