@@ -76,7 +76,6 @@ jobs:
           **/.git*
           **/.git*/**
           **/node_modules/**
-          .env
         dangerous-clean-slate: false
         log-level: standard
         security: loose
