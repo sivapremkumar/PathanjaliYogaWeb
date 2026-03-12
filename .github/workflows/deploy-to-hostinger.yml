@@ -47,6 +47,14 @@ jobs:
         server-dir: ./
         port: 21
         protocol: ftps
-        exclude: "*.map"
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/*.map
+          api/**
+          php-backend/**
+          .well-known/**
+        dangerous-clean-slate: false
         log-level: standard
         security: loose
