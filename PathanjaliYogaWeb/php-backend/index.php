@@ -16,7 +16,18 @@ if (file_exists(__DIR__ . '/.env')) {
 $autoloadPath = __DIR__ . '/vendor/autoload.php';
 $autoloadRealPath = __DIR__ . '/vendor/composer/autoload_real.php';
 $frameworkReady = false;
-if (file_exists($autoloadPath) && file_exists($autoloadRealPath)) {
+foreach ([
+    __DIR__ . '/vendor/composer/ClassLoader.php',
+    __DIR__ . '/vendor/composer/autoload_static.php',
+    __DIR__ . '/vendor/ralouphie/getallheaders/src/getallheaders.php',
+] as $requiredFile) {
+    if (!file_exists($requiredFile)) {
+        $frameworkReady = false;
+        $autoloadPath = '';
+        break;
+    }
+}
+if ($autoloadPath !== '' && file_exists($autoloadPath) && file_exists($autoloadRealPath)) {
     $autoloadContents = @file_get_contents($autoloadPath);
     $autoloadRealContents = @file_get_contents($autoloadRealPath);
     if ($autoloadContents !== false && $autoloadRealContents !== false) {
