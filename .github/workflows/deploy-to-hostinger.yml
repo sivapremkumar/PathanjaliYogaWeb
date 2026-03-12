@@ -58,3 +58,25 @@ jobs:
         dangerous-clean-slate: false
         log-level: standard
         security: loose
+
+    - name: Deploy PHP backend to /api
+      env:
+        FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+        FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: 89.117.27.43
+        username: ${{ env.FTP_USERNAME }}
+        password: ${{ env.FTP_PASSWORD }}
+        local-dir: ./PathanjaliYogaWeb/php-backend/
+        server-dir: ./api/
+        port: 21
+        protocol: ftps
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          .env
+        dangerous-clean-slate: false
+        log-level: standard
+        security: loose
