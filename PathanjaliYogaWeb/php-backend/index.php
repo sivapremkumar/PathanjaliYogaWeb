@@ -35,7 +35,7 @@ $routes = require __DIR__ . '/src/routes.php';
 $routes($app);
 
 $app->get('/', function ($request, $response) {
-    $response->getBody()->write('YogaTrust PHP Backend is running.');
+    $response->getBody()->write('YogaTrust PHP Backend API is running. Version: 2.0');
     return $response;
 });
 
