@@ -9,10 +9,10 @@ class Database {
         $capsule = new Capsule;
         $capsule->addConnection([
             'driver'    => 'mysql',
-            'host'      => 'localhost',
-            'database'  => 'yogatrust',
-            'username'  => 'root',
-            'password'  => '',
+            'host'      => getenv('DB_HOST') ?: 'localhost',
+            'database'  => getenv('DB_DATABASE') ?: 'yogatrust',
+            'username'  => getenv('DB_USERNAME') ?: 'root',
+            'password'  => getenv('DB_PASSWORD') ?: '',
             'charset'   => 'utf8',
             'collation' => 'utf8_unicode_ci',
             'prefix'    => '',
