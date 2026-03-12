@@ -2,6 +2,11 @@
 // src/Models/Trustee.php
 namespace App\Models;
 
-class Trustee {
-    // TODO: Implement Trustee model with DB integration
+use Illuminate\Database\Eloquent\Model;
+
+class Trustee extends Model {
+    protected $table = 'trustees';
+    protected $fillable = [
+        'name', 'role', 'description', 'image_url'
+    ];
 }

@@ -2,6 +2,11 @@
 // src/Models/AdminUser.php
 namespace App\Models;
 
-class AdminUser {
-    // TODO: Implement AdminUser model with DB integration
+use Illuminate\Database\Eloquent\Model;
+
+class AdminUser extends Model {
+    protected $table = 'admin_users';
+    protected $fillable = [
+        'username', 'password_hash'
+    ];
 }

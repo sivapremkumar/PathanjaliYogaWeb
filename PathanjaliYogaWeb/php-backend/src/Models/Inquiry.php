@@ -2,6 +2,11 @@
 // src/Models/Inquiry.php
 namespace App\Models;
 
-class Inquiry {
-    // TODO: Implement Inquiry model with DB integration
+use Illuminate\Database\Eloquent\Model;
+
+class Inquiry extends Model {
+    protected $table = 'inquiries';
+    protected $fillable = [
+        'name', 'email', 'phone', 'message', 'is_resolved'
+    ];
 }
