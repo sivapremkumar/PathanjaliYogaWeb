@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { LucideAngularModule, Heart, ShieldCheck, Download } from 'lucide-angular';
+import { environment } from '../../../environments/environment';
 
 declare var Razorpay: any;
 
@@ -70,6 +71,6 @@ export class DonateComponent {
 
     downloadReceipt() {
         // Trigger backend PDF download
-        window.open(`https://localhost:7082/api/Donation/receipt/${this.receiptId}`, '_blank');
+        window.open(`${environment.apiUrl}/Donation/receipt/${this.receiptId}`, '_blank');
     }
 }
