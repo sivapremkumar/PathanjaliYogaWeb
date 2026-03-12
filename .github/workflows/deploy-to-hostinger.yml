@@ -95,6 +95,7 @@ jobs:
           **/node_modules/**
           vendor/**
           vendor
+        state-name: .ftp-deploy-sync-state-backend-v2.json
         dangerous-clean-slate: false
         log-level: standard
         security: loose
