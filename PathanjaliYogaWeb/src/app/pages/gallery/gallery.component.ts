@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../services/api.service';
-import { LucideAngularModule, Image, Search } from 'lucide-angular';
+import { LucideAngularModule, Image, Search, ChevronLeft, ChevronRight } from 'lucide-angular';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -13,8 +13,13 @@ import { environment } from '../../../environments/environment';
 })
 export class GalleryComponent implements OnInit {
     items: any[] = [];
+    currentPage = 1;
+    readonly pageSize = 8;
+    isPageTransitioning = false;
     readonly Image = Image;
     readonly Search = Search;
+    readonly ChevronLeft = ChevronLeft;
+    readonly ChevronRight = ChevronRight;
     readonly galleryUploadsBase = `${environment.uploadsBase}/gallery`;
 
     constructor(private api: ApiService) { }
@@ -51,6 +56,37 @@ export class GalleryComponent implements OnInit {
                 .filter(item => !!item.url);
 
             this.items = apiItems.length > 0 ? apiItems : this.fallbackItems;
+            this.currentPage = 1;
         });
+    }
+
+    get totalPages(): number {
+        return Math.max(1, Math.ceil(this.items.length / this.pageSize));
+    }
+
+    get paginatedItems(): any[] {
+        const start = (this.currentPage - 1) * this.pageSize;
+        return this.items.slice(start, start + this.pageSize);
+    }
+
+    goToPage(page: number) {
+        const targetPage = Math.min(Math.max(1, page), this.totalPages);
+        if (targetPage === this.currentPage || this.isPageTransitioning) {
+            return;
+        }
+
+        this.isPageTransitioning = true;
+        setTimeout(() => {
+            this.currentPage = targetPage;
+            this.isPageTransitioning = false;
+        }, 180);
+    }
+
+    nextPage() {
+        this.goToPage(this.currentPage + 1);
+    }
+
+    prevPage() {
+        this.goToPage(this.currentPage - 1);
     }
 }

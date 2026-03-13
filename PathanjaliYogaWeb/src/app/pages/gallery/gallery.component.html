@@ -5,8 +5,10 @@
     </div>
 
     <div class="container mx-auto px-4">
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            <div *ngFor="let item of items" class="group relative rounded-3xl overflow-hidden shadow-lg h-72">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 transition-all duration-300"
+            [class.opacity-0]="isPageTransitioning"
+            [class.translate-y-2]="isPageTransitioning">
+            <div *ngFor="let item of paginatedItems" class="group relative rounded-3xl overflow-hidden shadow-lg h-72">
                 <img [src]="item.url" class="w-full h-full object-cover transition-transform group-hover:scale-110">
                 <div
                     class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-8">
@@ -19,6 +21,24 @@
                         class="ml-auto text-white opacity-40 group-hover:opacity-100 group-hover:scale-125 transition-all"></lucide-icon>
                 </div>
             </div>
+        </div>
+
+        <div *ngIf="items.length > pageSize" class="mt-10 flex items-center justify-center gap-3">
+            <button type="button" (click)="prevPage()" [disabled]="currentPage === 1 || isPageTransitioning"
+                class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-600 transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40">
+                <lucide-icon [name]="ChevronLeft" size="16"></lucide-icon>
+                Previous
+            </button>
+
+            <span class="rounded-xl bg-primary/10 px-4 py-2 text-sm font-bold text-primary">
+                Page {{ currentPage }} of {{ totalPages }}
+            </span>
+
+            <button type="button" (click)="nextPage()" [disabled]="currentPage === totalPages || isPageTransitioning"
+                class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-600 transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40">
+                Next
+                <lucide-icon [name]="ChevronRight" size="16"></lucide-icon>
+            </button>
         </div>
     </div>
 </section>
