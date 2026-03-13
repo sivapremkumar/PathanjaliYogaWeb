@@ -111,6 +111,95 @@ if (!$frameworkReady) {
         exit;
     }
 
+    if ($method === 'POST' && ($path === '/api/auth/change-password' || $path === '/auth/change-password')) {
+        $raw = file_get_contents('php://input');
+        $data = json_decode($raw ?: '{}', true);
+        if (!is_array($data)) {
+            $data = [];
+        }
+
+        $username = trim((string)($data['username'] ?? ''));
+        $currentPassword = (string)($data['currentPassword'] ?? ($data['current_password'] ?? ''));
+        $newPassword = (string)($data['newPassword'] ?? ($data['new_password'] ?? ''));
+        $confirmPassword = (string)($data['confirmPassword'] ?? ($data['confirm_password'] ?? ''));
+
+        if ($username === '' || $currentPassword === '' || $newPassword === '') {
+            $sendJson(400, ['error' => 'Username, current password and new password are required']);
+            exit;
+        }
+        if (strlen($newPassword) < 6) {
+            $sendJson(400, ['error' => 'New password must be at least 6 characters']);
+            exit;
+        }
+        if ($confirmPassword !== '' && $confirmPassword !== $newPassword) {
+            $sendJson(400, ['error' => 'New password and confirm password do not match']);
+            exit;
+        }
+
+        $dbHost = getenv('DB_HOST') ?: 'localhost';
+        $dbName = getenv('DB_DATABASE') ?: '';
+        $dbUser = getenv('DB_USERNAME') ?: '';
+        $dbPass = getenv('DB_PASSWORD') ?: '';
+
+        $mysqli = @new mysqli($dbHost, $dbUser, $dbPass, $dbName);
+        if ($mysqli->connect_error) {
+            $sendJson(500, ['error' => 'Database connection failed']);
+            exit;
+        }
+
+        $stmt = $mysqli->prepare('SELECT id, password_hash FROM admin_users WHERE username = ? LIMIT 1');
+        if (!$stmt) {
+            $mysqli->close();
+            $sendJson(500, ['error' => 'Query preparation failed']);
+            exit;
+        }
+        $stmt->bind_param('s', $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $user = $result ? $result->fetch_assoc() : null;
+        $stmt->close();
+
+        if (!$user) {
+            $mysqli->close();
+            $sendJson(404, ['error' => 'Admin user not found']);
+            exit;
+        }
+
+        $existingHash = (string)($user['password_hash'] ?? '');
+        if (!password_verify($currentPassword, $existingHash)) {
+            $mysqli->close();
+            $sendJson(401, ['error' => 'Current password is incorrect']);
+            exit;
+        }
+
+        if (password_verify($newPassword, $existingHash)) {
+            $mysqli->close();
+            $sendJson(400, ['error' => 'New password must be different from current password']);
+            exit;
+        }
+
+        $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
+        $upd = $mysqli->prepare('UPDATE admin_users SET password_hash = ? WHERE id = ?');
+        if (!$upd) {
+            $mysqli->close();
+            $sendJson(500, ['error' => 'Query preparation failed']);
+            exit;
+        }
+        $id = (int)$user['id'];
+        $upd->bind_param('si', $newHash, $id);
+        $ok = $upd->execute();
+        $upd->close();
+        $mysqli->close();
+
+        if (!$ok) {
+            $sendJson(500, ['error' => 'Failed to update password']);
+            exit;
+        }
+
+        $sendJson(200, ['success' => true, 'message' => 'Password changed successfully']);
+        exit;
+    }
+
     $connectDb = function () use ($sendJson): ?mysqli {
         $dbHost = getenv('DB_HOST') ?: 'localhost';
         $dbName = getenv('DB_DATABASE') ?: '';

@@ -158,4 +158,9 @@ export class ApiService {
     getAdminStats(): Observable<any> {
         return this.http.get(`${this.apiUrl}/admin/stats`, { headers: this.getHeaders() });
     }
+
+    // Admin Security
+    changeAdminPassword(payload: any): Observable<any> {
+        return this.http.post(`${this.apiUrl}/auth/change-password`, payload, { headers: this.getHeaders() });
+    }
 }

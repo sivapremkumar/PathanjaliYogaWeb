@@ -30,8 +30,10 @@ return function (App $app) {
     // Auth routes
     $app->post('/api/auth/login', 'App\\Controllers\\AuthController:login');
     $app->post('/api/auth/logout', 'App\\Controllers\\AuthController:logout');
+    $app->post('/api/auth/change-password', 'App\\Controllers\\AuthController:changePassword');
     $app->post('/auth/login', 'App\\Controllers\\AuthController:login');
     $app->post('/auth/logout', 'App\\Controllers\\AuthController:logout');
+    $app->post('/auth/change-password', 'App\\Controllers\\AuthController:changePassword');
 
     // Helpful GET responses (avoids fatal 405 when opening login URL directly in browser)
     $app->get('/api/auth/login', function ($request, $response) {

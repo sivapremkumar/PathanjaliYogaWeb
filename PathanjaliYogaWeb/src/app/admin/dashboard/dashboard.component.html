@@ -4,9 +4,8 @@
         <aside class="admin-sidebar lg:sticky lg:top-0 lg:h-screen lg:w-[290px] lg:shrink-0">
             <div class="admin-brand">
                 <div class="admin-brand-badge">
-                    <img *ngIf="!logoLoadFailed" [src]="adminLogoUrl"
-                        alt="Sri Pathanjali Yoga Trust" class="w-full h-full object-contain"
-                        (error)="logoLoadFailed = true">
+                    <img *ngIf="!logoLoadFailed" [src]="adminLogoUrl" alt="Sri Pathanjali Yoga Trust"
+                        class="w-full h-full object-contain" (error)="logoLoadFailed = true">
                     <span *ngIf="logoLoadFailed" class="text-xs font-extrabold tracking-wide text-emerald-700">SP</span>
                 </div>
                 <div>
@@ -84,6 +83,52 @@
                 <app-gallery-admin *ngIf="activeTab === 'gallery'"></app-gallery-admin>
                 <app-programs-admin *ngIf="activeTab === 'programs'"></app-programs-admin>
                 <app-inquiries *ngIf="activeTab === 'inquiries'"></app-inquiries>
+
+                <div *ngIf="activeTab === 'security'" class="max-w-2xl">
+                    <div class="bg-white rounded-[24px] border border-gray-100 shadow-sm p-8">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                                <lucide-icon [name]="Lock" size="20"></lucide-icon>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900">Change Admin Password</h3>
+                                <p class="text-sm text-gray-500">Use your current password to set a new one.</p>
+                            </div>
+                        </div>
+
+                        <form (ngSubmit)="submitPasswordChange()" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Current Password</label>
+                                <input type="password" [(ngModel)]="passwordForm.currentPassword" name="currentPassword" required
+                                    class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 focus:border-primary outline-none transition-all">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">New Password</label>
+                                <input type="password" [(ngModel)]="passwordForm.newPassword" name="newPassword" required minlength="6"
+                                    class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 focus:border-primary outline-none transition-all">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Confirm New Password</label>
+                                <input type="password" [(ngModel)]="passwordForm.confirmPassword" name="confirmPassword" required minlength="6"
+                                    class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 focus:border-primary outline-none transition-all">
+                            </div>
+
+                            <p *ngIf="passwordMessage" class="text-sm text-emerald-700 bg-emerald-50 rounded-xl px-4 py-3 font-semibold">
+                                {{passwordMessage}}
+                            </p>
+                            <p *ngIf="passwordError" class="text-sm text-red-700 bg-red-50 rounded-xl px-4 py-3 font-semibold">
+                                {{passwordError}}
+                            </p>
+
+                            <button type="submit" [disabled]="changingPassword"
+                                class="btn-primary mt-2 px-6 py-3 inline-flex items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed">
+                                {{changingPassword ? 'Updating...' : 'Update Password'}}
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </section>
         </main>
     </div>
