@@ -13,6 +13,8 @@ import { RouterModule } from '@angular/router';
 })
 export class ProgramsListComponent implements OnInit {
     programs: any[] = [];
+    currentPage = 1;
+    readonly itemsPerPage = 3;
     readonly Heart = Heart;
     readonly BookOpen = BookOpen;
     readonly Users = Users;
@@ -26,6 +28,30 @@ export class ProgramsListComponent implements OnInit {
     ];
 
     constructor(private api: ApiService) { }
+
+    get totalPages(): number {
+        return Math.max(1, Math.ceil(this.programs.length / this.itemsPerPage));
+    }
+
+    get pagedPrograms(): any[] {
+        const start = (this.currentPage - 1) * this.itemsPerPage;
+        return this.programs.slice(start, start + this.itemsPerPage);
+    }
+
+    goToPage(page: number) {
+        if (page < 1 || page > this.totalPages || page === this.currentPage) {
+            return;
+        }
+        this.currentPage = page;
+    }
+
+    nextPage() {
+        this.goToPage(this.currentPage + 1);
+    }
+
+    previousPage() {
+        this.goToPage(this.currentPage - 1);
+    }
 
     private normalizeItem(item: any) {
         const candidate = item.imageUrl ?? item.image_url ?? item.image ?? '';
@@ -50,6 +76,7 @@ export class ProgramsListComponent implements OnInit {
                 .filter(item => !!item.title);
 
             this.programs = apiPrograms.length > 0 ? apiPrograms : this.fallbackPrograms;
+            this.currentPage = 1;
         });
     }
 }

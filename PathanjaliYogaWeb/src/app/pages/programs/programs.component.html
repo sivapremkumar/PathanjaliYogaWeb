@@ -12,7 +12,7 @@
 
         <!-- Programs Grid -->
         <div class="grid md:grid-cols-3 gap-12">
-            <div *ngFor="let program of programs"
+            <div *ngFor="let program of pagedPrograms"
                 class="bg-white rounded-[40px] overflow-hidden shadow-xl shadow-primary/5 hover:shadow-primary/10 transition-shadow border border-gray-100 group">
                 <div class="relative h-64 overflow-hidden">
                     <div
@@ -46,6 +46,22 @@
                     </a>
                 </div>
             </div>
+        </div>
+
+        <div *ngIf="programs.length > itemsPerPage" class="flex items-center justify-center gap-3 mt-14">
+            <button type="button" (click)="previousPage()" [disabled]="currentPage === 1"
+                class="px-4 py-2 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-primary hover:text-primary transition-all">
+                Previous
+            </button>
+
+            <div class="px-4 py-2 rounded-xl bg-primary text-white text-sm font-bold tracking-wider min-w-28 text-center">
+                {{currentPage}} / {{totalPages}}
+            </div>
+
+            <button type="button" (click)="nextPage()" [disabled]="currentPage === totalPages"
+                class="px-4 py-2 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-primary hover:text-primary transition-all">
+                Next
+            </button>
         </div>
     </div>
 </section>

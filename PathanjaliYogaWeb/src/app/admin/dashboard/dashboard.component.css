@@ -34,14 +34,14 @@
 	width: 2.9rem;
 	height: 2.9rem;
 	border-radius: 1rem;
-	color: #fff;
-	font-weight: 800;
-	letter-spacing: 0.03em;
+	padding: 0.35rem;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: linear-gradient(135deg, #14532d, #16a34a);
-	box-shadow: 0 12px 30px rgba(22, 163, 74, 0.35);
+	background: #ffffff;
+	border: 1px solid rgba(15, 23, 42, 0.08);
+	box-shadow: 0 12px 24px -18px rgba(15, 23, 42, 0.55);
+	overflow: hidden;
 }
 
 .admin-brand-title {
