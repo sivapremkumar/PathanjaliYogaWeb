@@ -4,22 +4,25 @@
         <aside class="admin-sidebar lg:sticky lg:top-0 lg:h-screen lg:w-[290px] lg:shrink-0">
             <div class="admin-brand">
                 <div class="admin-brand-badge">
-                    <img src="https://srv982-files.hstgr.io/9e927c8ea09d79f6/files/public_html/logo_main.jpeg" alt="Sri Pathanjali Yoga Trust" class="w-full h-full object-contain">
+                    <img *ngIf="!logoLoadFailed" [src]="adminLogoUrl"
+                        alt="Sri Pathanjali Yoga Trust" class="w-full h-full object-contain"
+                        (error)="logoLoadFailed = true">
+                    <span *ngIf="logoLoadFailed" class="text-xs font-extrabold tracking-wide text-emerald-700">SP</span>
                 </div>
                 <div>
-                    <p class="text-[0.7rem] tracking-[0.18em] uppercase text-slate-500 font-bold">Pathanjali Yoga Trust</p>
+                    <p class="text-[0.7rem] tracking-[0.18em] uppercase text-slate-500 font-bold">Pathanjali Yoga Trust
+                    </p>
                     <h1 class="admin-brand-title">Control Room</h1>
                 </div>
             </div>
 
             <nav class="admin-nav">
-                <button *ngFor="let item of navItems" (click)="activeTab = item.key"
-                    class="admin-nav-item"
-                    [class.admin-nav-item-active]="activeTab === item.key"
-                    type="button">
+                <button *ngFor="let item of navItems" (click)="activeTab = item.key" class="admin-nav-item"
+                    [class.admin-nav-item-active]="activeTab === item.key" type="button">
                     <lucide-icon [name]="item.icon" size="18"></lucide-icon>
                     <span>{{item.label}}</span>
-                    <span *ngIf="item.key === 'inquiries' && stats.newInquiries > 0" class="admin-nav-badge">{{stats.newInquiries}}</span>
+                    <span *ngIf="item.key === 'inquiries' && stats.newInquiries > 0"
+                        class="admin-nav-badge">{{stats.newInquiries}}</span>
                 </button>
             </nav>
 
@@ -34,7 +37,8 @@
                 <div>
                     <p class="admin-date-label">{{todayLabel}}</p>
                     <h2 class="admin-page-title">{{activeTabTitle}}</h2>
-                    <p class="mt-1 text-sm text-slate-500">Manage trust operations, content, and community activity from one place.</p>
+                    <p class="mt-1 text-sm text-slate-500">Manage trust operations, content, and community activity from
+                        one place.</p>
                 </div>
                 <div class="admin-user-pill">
                     <span class="admin-user-dot"></span>
@@ -51,19 +55,22 @@
                     </article>
 
                     <article class="admin-stat-card">
-                        <div class="admin-stat-icon bg-emerald-100 text-emerald-700"><lucide-icon [name]="Users" size="22"></lucide-icon></div>
+                        <div class="admin-stat-icon bg-emerald-100 text-emerald-700"><lucide-icon [name]="Users"
+                                size="22"></lucide-icon></div>
                         <p class="admin-stat-label">Active Trustees</p>
                         <h3 class="admin-stat-value">{{stats.trusteeCount}}</h3>
                     </article>
 
                     <article class="admin-stat-card">
-                        <div class="admin-stat-icon bg-amber-100 text-amber-700"><lucide-icon [name]="Image" size="22"></lucide-icon></div>
+                        <div class="admin-stat-icon bg-amber-100 text-amber-700"><lucide-icon [name]="Image"
+                                size="22"></lucide-icon></div>
                         <p class="admin-stat-label">Gallery Items</p>
                         <h3 class="admin-stat-value">{{stats.galleryCount}}</h3>
                     </article>
 
                     <article class="admin-stat-card">
-                        <div class="admin-stat-icon bg-cyan-100 text-cyan-700"><lucide-icon [name]="MessageSquare" size="22"></lucide-icon></div>
+                        <div class="admin-stat-icon bg-cyan-100 text-cyan-700"><lucide-icon [name]="MessageSquare"
+                                size="22"></lucide-icon></div>
                         <p class="admin-stat-label">Unresolved Inquiries</p>
                         <h3 class="admin-stat-value">{{stats.newInquiries}}</h3>
                     </article>

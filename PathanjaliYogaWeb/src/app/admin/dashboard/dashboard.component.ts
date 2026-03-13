@@ -21,6 +21,8 @@ import { ProgramsAdminComponent } from '../programs/programs.component';
 export class DashboardComponent implements OnInit {
     stats: any = { totalDonations: 0, donationCount: 0, galleryCount: 0, newInquiries: 0, trusteeCount: 0 };
     activeTab = 'stats';
+    logoLoadFailed = false;
+    readonly adminLogoUrl = 'logo_main.jpeg';
     readonly todayLabel = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
     readonly LayoutDashboard = LayoutDashboard;
