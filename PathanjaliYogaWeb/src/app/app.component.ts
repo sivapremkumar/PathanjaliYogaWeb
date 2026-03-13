@@ -19,6 +19,7 @@ export class AppComponent {
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationEnd) {
                 this.isAdminRoute = event.urlAfterRedirects.includes('/admin');
+                window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
             }
         });
     }
