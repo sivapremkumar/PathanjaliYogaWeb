@@ -24,7 +24,15 @@ export class ContactComponent {
     constructor(private api: ApiService) { }
 
     onSubmit() {
-        this.api.submitInquiry(this.inquiry).subscribe(() => {
+        const subject = this.inquiry.subject.trim();
+        const body = this.inquiry.message.trim();
+        const payload = {
+            name: this.inquiry.name,
+            email: this.inquiry.email,
+            message: subject ? `Subject: ${subject}\n\n${body}` : body,
+        };
+
+        this.api.submitInquiry(payload).subscribe(() => {
             this.isSubmitted = true;
             this.inquiry = { name: '', email: '', subject: '', message: '' };
         });

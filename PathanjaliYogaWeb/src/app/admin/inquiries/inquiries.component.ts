@@ -17,9 +17,21 @@ export class InquiriesComponent implements OnInit {
 
     constructor(private api: ApiService) { }
 
+    private normalizeInquiry(item: any) {
+        return {
+            id: item.id,
+            name: (item.name ?? '').trim(),
+            email: (item.email ?? '').trim(),
+            message: (item.message ?? '').trim(),
+            createdAt: item.createdAt ?? item.created_at ?? null,
+        };
+    }
+
     ngOnInit() {
         this.api.getInquiries().subscribe(data => {
-            this.inquiries = data;
+            this.inquiries = data
+                .map(item => this.normalizeInquiry(item))
+                .filter(item => item.name !== '' || item.email !== '' || item.message !== '');
         });
     }
 }
