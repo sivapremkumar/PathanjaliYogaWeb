@@ -13,7 +13,8 @@
                         <div class="text-sm font-bold text-primary">{{i.email}}</div>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest"
+                        <span
+                            class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest"
                             [ngClass]="i.isResolved ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'">
                             <lucide-icon [name]="i.isResolved ? CheckCircle : Clock" size="14"></lucide-icon>
                             {{ i.isResolved ? 'Resolved' : 'Unresolved' }}
