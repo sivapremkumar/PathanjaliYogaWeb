@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../services/api.service';
 import { LucideAngularModule, Heart, History, Users, Target } from 'lucide-angular';
+import { environment } from '../../../environments/environment';
 
 @Component({
     selector: 'app-about',
@@ -16,6 +17,7 @@ export class AboutComponent implements OnInit {
     readonly Users = Users;
     readonly Target = Target;
     readonly Heart = Heart;
+    readonly bannerUrl = environment.uploadsBase + '/others/Yoga-wellness-banner.jpeg';
 
     constructor(private api: ApiService) { }
 

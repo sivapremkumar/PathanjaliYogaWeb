@@ -8,7 +8,8 @@
     </div>
 
     <!-- Add News Form -->
-    <div *ngIf="showForm && !editingItem" class="bg-white rounded-[24px] p-8 shadow-sm border border-gray-100 mb-8 animate-fade-in">
+    <div *ngIf="showForm && !editingItem"
+        class="bg-white rounded-[24px] p-8 shadow-sm border border-gray-100 mb-8 animate-fade-in">
         <h3 class="text-xl font-bold mb-6">Create Post</h3>
         <form (ngSubmit)="addNews()" #newsForm="ngForm" class="space-y-6">
             <div class="grid gap-6">
@@ -37,18 +38,22 @@
                             <input type="file" accept="image/*" class="hidden" (change)="onFileSelected($event)">
                         </label>
                         <div class="flex-grow">
-                            <p class="text-sm text-gray-500 mb-2">Upload from device <span class="text-gray-400">— or —</span></p>
+                            <p class="text-sm text-gray-500 mb-2">Upload from device <span class="text-gray-400">— or
+                                    —</span></p>
                             <input type="url" [(ngModel)]="newItem.imageUrl" name="imageUrl"
                                 placeholder="https://content.example.com/image.jpg" [disabled]="!!selectedFile"
                                 class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-3 focus:border-primary outline-none transition-all text-sm disabled:opacity-40">
-                            <p *ngIf="selectedFile" class="mt-1 text-xs text-primary font-semibold">{{ selectedFile.name }}</p>
+                            <p *ngIf="selectedFile" class="mt-1 text-xs text-primary font-semibold">{{ selectedFile.name
+                                }}</p>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="flex justify-end gap-4 mt-8">
-                <button type="button" (click)="showForm = false; selectedFile = null; imagePreviewUrl = null" class="btn-outline">Cancel</button>
-                <button type="submit" [disabled]="!newsForm.valid || isUploading" class="btn-primary flex items-center gap-2">
+                <button type="button" (click)="showForm = false; selectedFile = null; imagePreviewUrl = null"
+                    class="btn-outline">Cancel</button>
+                <button type="submit" [disabled]="!newsForm.valid || isUploading"
+                    class="btn-primary flex items-center gap-2">
                     <lucide-icon *ngIf="isUploading" [name]="Loader" size="18" class="animate-spin"></lucide-icon>
                     {{ isUploading ? 'Publishing…' : 'Publish' }}
                 </button>
@@ -57,11 +62,13 @@
     </div>
 
     <!-- Edit News Form -->
-    <div *ngIf="editingItem" class="bg-white rounded-[24px] p-8 shadow-sm border border-primary/30 mb-8 animate-fade-in">
+    <div *ngIf="editingItem"
+        class="bg-white rounded-[24px] p-8 shadow-sm border border-primary/30 mb-8 animate-fade-in">
         <h3 class="text-xl font-bold mb-6">Edit Post</h3>
         <div class="grid gap-6">
             <div>
-                <label class="block text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Title / Headline</label>
+                <label class="block text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Title /
+                    Headline</label>
                 <input type="text" [(ngModel)]="editingItem.title" name="edit-title"
                     class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 focus:border-primary outline-none transition-all">
             </div>
@@ -75,17 +82,20 @@
                 <div class="flex items-start gap-6">
                     <label
                         class="flex flex-col items-center justify-center w-32 h-32 rounded-2xl border-2 border-dashed border-gray-200 cursor-pointer hover:border-primary transition-colors bg-gray-50 overflow-hidden flex-shrink-0">
-                        <img *ngIf="editPreviewUrl || editingItem.imageUrl" [src]="editPreviewUrl || editingItem.imageUrl" class="w-full h-full object-cover">
-                        <span *ngIf="!editPreviewUrl && !editingItem.imageUrl" class="flex flex-col items-center gap-1 text-gray-400">
+                        <img *ngIf="editPreviewUrl || editingItem.imageUrl"
+                            [src]="editPreviewUrl || editingItem.imageUrl" class="w-full h-full object-cover">
+                        <span *ngIf="!editPreviewUrl && !editingItem.imageUrl"
+                            class="flex flex-col items-center gap-1 text-gray-400">
                             <lucide-icon [name]="Upload" size="24"></lucide-icon>
                             <span class="text-xs font-bold">Change</span>
                         </span>
                         <input type="file" accept="image/*" class="hidden" (change)="onEditFileSelected($event)">
                     </label>
                     <div class="flex-grow">
-                        <p class="text-sm text-gray-500 mb-2">Upload new image <span class="text-gray-400">— or —</span></p>
-                        <input type="url" [(ngModel)]="editingItem.imageUrl" name="edit-imageUrl" [disabled]="!!editFile"
-                            placeholder="https://content.example.com/image.jpg"
+                        <p class="text-sm text-gray-500 mb-2">Upload new image <span class="text-gray-400">— or —</span>
+                        </p>
+                        <input type="url" [(ngModel)]="editingItem.imageUrl" name="edit-imageUrl"
+                            [disabled]="!!editFile" placeholder="https://content.example.com/image.jpg"
                             class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-3 focus:border-primary outline-none transition-all text-sm disabled:opacity-40">
                         <p *ngIf="editFile" class="mt-1 text-xs text-primary font-semibold">{{ editFile.name }}</p>
                     </div>
@@ -94,7 +104,8 @@
         </div>
         <div class="flex justify-end gap-4 mt-8">
             <button type="button" (click)="cancelEdit()" class="btn-outline">Cancel</button>
-            <button type="button" (click)="saveEdit()" [disabled]="isUploading" class="btn-primary flex items-center gap-2">
+            <button type="button" (click)="saveEdit()" [disabled]="isUploading"
+                class="btn-primary flex items-center gap-2">
                 <lucide-icon *ngIf="isUploading" [name]="Loader" size="18" class="animate-spin"></lucide-icon>
                 {{ isUploading ? 'Saving…' : 'Save Changes' }}
             </button>
