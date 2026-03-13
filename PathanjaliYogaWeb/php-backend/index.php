@@ -880,7 +880,7 @@ if (!$frameworkReady) {
             exit;
         }
         $rows = [];
-        $result = $mysqli->query('SELECT id, name, email, phone, message, is_resolved, created_at, updated_at FROM inquiries ORDER BY id DESC');
+        $result = $mysqli->query('SELECT id, name, email, phone, message, is_resolved, created_at, updated_at FROM inquiries ORDER BY is_resolved ASC, id DESC');
         if ($result) {
             while ($row = $result->fetch_assoc()) {
                 $rows[] = $row;
@@ -925,6 +925,44 @@ if (!$frameworkReady) {
         exit;
     }
 
+    if (in_array($method, ['PUT', 'PATCH']) && preg_match('#^/(api/)?inquiries/(\d+)/resolve$#', $path, $m)) {
+        $id = (int)$m[2];
+        $mysqli = $connectDb();
+        if (!$mysqli) {
+            exit;
+        }
+
+        $stmt = $mysqli->prepare('UPDATE inquiries SET is_resolved = 1 WHERE id = ?');
+        if (!$stmt) {
+            $mysqli->close();
+            $sendJson(500, ['error' => 'Query preparation failed']);
+            exit;
+        }
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $affected = $stmt->affected_rows;
+        $stmt->close();
+
+        if ($affected <= 0) {
+            $check = $mysqli->query('SELECT id, is_resolved FROM inquiries WHERE id = ' . $id . ' LIMIT 1');
+            $exists = $check && $check->num_rows > 0;
+            if ($check) {
+                $check->free();
+            }
+            $mysqli->close();
+            if ($exists) {
+                $sendJson(200, ['success' => true, 'id' => $id, 'is_resolved' => true]);
+            } else {
+                $sendJson(404, ['success' => false, 'error' => 'Not found']);
+            }
+            exit;
+        }
+
+        $mysqli->close();
+        $sendJson(200, ['success' => true, 'id' => $id, 'is_resolved' => true]);
+        exit;
+    }
+
     if ($method === 'GET' && ($path === '/api/donations' || $path === '/donations')) {
         $mysqli = $connectDb();
         if (!$mysqli) {
@@ -962,7 +1000,7 @@ if (!$frameworkReady) {
         if ($q2) { $stats['totalDonations'] = (float)($q2->fetch_assoc()['s'] ?? 0); $q2->free(); }
         $q3 = $mysqli->query('SELECT COUNT(*) AS c FROM donations');
         if ($q3) { $stats['donationCount'] = (int)($q3->fetch_assoc()['c'] ?? 0); $q3->free(); }
-        $q4 = $mysqli->query('SELECT COUNT(*) AS c FROM inquiries');
+        $q4 = $mysqli->query('SELECT COUNT(*) AS c FROM inquiries WHERE is_resolved = 0');
         if ($q4) { $stats['newInquiries'] = (int)($q4->fetch_assoc()['c'] ?? 0); $q4->free(); }
         $ensureGalleryTable($mysqli);
         $qg = $mysqli->query('SELECT COUNT(*) AS c FROM gallery_items');

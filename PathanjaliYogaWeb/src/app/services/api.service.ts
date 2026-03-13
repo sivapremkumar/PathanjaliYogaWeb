@@ -124,6 +124,10 @@ export class ApiService {
         return this.http.get<any[]>(`${this.apiUrl}/inquiries`, { headers: this.getHeaders() });
     }
 
+    resolveInquiry(id: number): Observable<any> {
+        return this.http.patch(`${this.apiUrl}/inquiries/${id}/resolve`, {}, { headers: this.getHeaders() });
+    }
+
     // Admin Stats
     getAdminStats(): Observable<any> {
         return this.http.get(`${this.apiUrl}/admin/stats`, { headers: this.getHeaders() });

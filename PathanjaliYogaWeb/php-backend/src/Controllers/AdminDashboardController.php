@@ -26,7 +26,7 @@ class AdminDashboardController {
             'trusteeCount' => Trustee::count(),
             'totalDonations' => Donation::where('payment_status', 'Completed')->sum('amount'),
             'donationCount' => Donation::count(),
-            'newInquiries' => Inquiry::count(),
+            'newInquiries' => Inquiry::where('is_resolved', false)->count(),
             'galleryCount' => GalleryItem::count(),
             'totalNews' => NewsEvent::count()
         ];

@@ -12,13 +12,27 @@
                         <h3 class="text-xl font-bold text-gray-900">{{i.name}}</h3>
                         <div class="text-sm font-bold text-primary">{{i.email}}</div>
                     </div>
-                    <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400">
-                        <lucide-icon [name]="Clock" size="14"></lucide-icon>
-                        {{i.createdAt | date:'medium'}}
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest"
+                            [ngClass]="i.isResolved ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'">
+                            <lucide-icon [name]="i.isResolved ? CheckCircle : Clock" size="14"></lucide-icon>
+                            {{ i.isResolved ? 'Resolved' : 'Unresolved' }}
+                        </span>
+                        <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400">
+                            <lucide-icon [name]="Clock" size="14"></lucide-icon>
+                            {{i.createdAt | date:'medium'}}
+                        </div>
                     </div>
                 </div>
                 <div class="bg-white p-4 rounded-xl text-gray-600 border border-gray-100 italic">
                     "{{i.message}}"
+                </div>
+                <div class="mt-4 flex justify-end" *ngIf="!i.isResolved">
+                    <button type="button" (click)="markResolved(i)"
+                        class="inline-flex items-center gap-2 rounded-xl border border-emerald-100 px-3 py-2 text-xs font-bold uppercase tracking-widest text-emerald-600 hover:bg-emerald-50">
+                        <lucide-icon [name]="CheckCircle" size="16"></lucide-icon>
+                        Mark Resolved
+                    </button>
                 </div>
             </div>
 

@@ -43,8 +43,27 @@ class InquiryController {
     }
 
     public function index(Request $request, Response $response, $args) {
-        $inquiries = Inquiry::all();
+        $inquiries = Inquiry::orderBy('is_resolved', 'asc')->orderBy('id', 'desc')->get();
         $response->getBody()->write($inquiries->toJson());
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    public function resolve(Request $request, Response $response, $args) {
+        $id = $args['id'] ?? null;
+        $inquiry = Inquiry::find($id);
+        if (!$inquiry) {
+            $response->getBody()->write(json_encode(['success' => false, 'error' => 'Not found']));
+            return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+        }
+
+        $inquiry->is_resolved = true;
+        $inquiry->save();
+
+        $response->getBody()->write(json_encode([
+            'success' => true,
+            'id' => $inquiry->id,
+            'is_resolved' => (bool)$inquiry->is_resolved,
+        ]));
         return $response->withHeader('Content-Type', 'application/json');
     }
 }

@@ -105,8 +105,10 @@ return function (App $app) {
     // Inquiries
     $app->post('/api/inquiries', 'App\\Controllers\\InquiryController:create');
     $app->get('/api/inquiries', 'App\\Controllers\\InquiryController:index');
+    $app->patch('/api/inquiries/{id}/resolve', 'App\\Controllers\\InquiryController:resolve');
     $app->post('/inquiries', 'App\\Controllers\\InquiryController:create');
     $app->get('/inquiries', 'App\\Controllers\\InquiryController:index');
+    $app->patch('/inquiries/{id}/resolve', 'App\\Controllers\\InquiryController:resolve');
 
     // Admin Dashboard
     $app->get('/api/admin/stats', 'App\\Controllers\\AdminDashboardController:stats');
