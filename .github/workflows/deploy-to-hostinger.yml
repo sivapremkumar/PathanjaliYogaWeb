@@ -50,7 +50,8 @@ jobs:
         composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --ignore-platform-reqs
 
         
-    - name: Deploy to Hostinger via FTP
+    - name: Deploy to Hostinger via FTP (attempt 1)
+      id: deploy_frontend_attempt_1
       continue-on-error: true
       env:
         FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
@@ -75,8 +76,38 @@ jobs:
         dangerous-clean-slate: false
         log-level: standard
         security: loose
+        timeout: 120000
 
-    - name: Deploy PHP backend to /api
+    - name: Deploy to Hostinger via FTP (attempt 2)
+      if: steps.deploy_frontend_attempt_1.outcome == 'failure'
+      env:
+        FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+        FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: 89.117.27.43
+        username: ${{ env.FTP_USERNAME }}
+        password: ${{ env.FTP_PASSWORD }}
+        local-dir: ./PathanjaliYogaWeb/dist/Yoga.Web/browser/
+        server-dir: ./
+        port: 21
+        protocol: ftps
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/*.map
+          api/**
+          php-backend/**
+          .well-known/**
+        dangerous-clean-slate: false
+        log-level: verbose
+        security: loose
+        timeout: 120000
+
+    - name: Deploy PHP backend to /api (attempt 1)
+      id: deploy_backend_attempt_1
+      continue-on-error: true
       env:
         FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
         FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
@@ -99,3 +130,30 @@ jobs:
         dangerous-clean-slate: false
         log-level: standard
         security: loose
+        timeout: 120000
+
+    - name: Deploy PHP backend to /api (attempt 2)
+      if: steps.deploy_backend_attempt_1.outcome == 'failure'
+      env:
+        FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+        FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: 89.117.27.43
+        username: ${{ env.FTP_USERNAME }}
+        password: ${{ env.FTP_PASSWORD }}
+        local-dir: ./PathanjaliYogaWeb/php-backend/
+        server-dir: ./api/
+        port: 21
+        protocol: ftps
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          vendor/**
+          vendor
+        state-name: .ftp-deploy-sync-state-backend-v2.json
+        dangerous-clean-slate: false
+        log-level: verbose
+        security: loose
+        timeout: 120000
