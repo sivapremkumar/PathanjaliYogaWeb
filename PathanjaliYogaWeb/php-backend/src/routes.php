@@ -76,10 +76,16 @@ return function (App $app) {
 
     // News & Events
     $app->get('/api/news', 'App\\Controllers\\NewsEventController:index');
+    $app->post('/api/news/upload', 'App\\Controllers\\NewsEventController:upload');
     $app->post('/api/news', 'App\\Controllers\\NewsEventController:create');
+    $app->put('/api/news/{id}', 'App\\Controllers\\NewsEventController:update');
+    $app->patch('/api/news/{id}', 'App\\Controllers\\NewsEventController:update');
     $app->delete('/api/news/{id}', 'App\\Controllers\\NewsEventController:delete');
     $app->get('/news', 'App\\Controllers\\NewsEventController:index');
+    $app->post('/news/upload', 'App\\Controllers\\NewsEventController:upload');
     $app->post('/news', 'App\\Controllers\\NewsEventController:create');
+    $app->put('/news/{id}', 'App\\Controllers\\NewsEventController:update');
+    $app->patch('/news/{id}', 'App\\Controllers\\NewsEventController:update');
     $app->delete('/news/{id}', 'App\\Controllers\\NewsEventController:delete');
 
     // Inquiries

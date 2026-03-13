@@ -357,6 +357,93 @@ if (!$frameworkReady) {
         exit;
     }
 
+    $isNewsUploadUrl = function (?string $imageUrl): bool {
+        if (!$imageUrl) {
+            return false;
+        }
+        $pathPart = parse_url($imageUrl, PHP_URL_PATH);
+        if (!$pathPart) {
+            $pathPart = $imageUrl;
+        }
+        return strpos($pathPart, '/api/uploads/news_event_clips/') === 0;
+    };
+
+    $cleanupNewsUploadIfUnused = function (mysqli $mysqli, ?string $imageUrl, ?int $excludeId = null) use ($isNewsUploadUrl): string {
+        if (!$isNewsUploadUrl($imageUrl)) {
+            return 'not_applicable';
+        }
+
+        $countSql = 'SELECT COUNT(*) AS c FROM news WHERE location = ?';
+        if ($excludeId !== null) {
+            $countSql .= ' AND id <> ?';
+        }
+        $countStmt = $mysqli->prepare($countSql);
+        if (!$countStmt) {
+            return 'cleanup_failed';
+        }
+        if ($excludeId !== null) {
+            $countStmt->bind_param('si', $imageUrl, $excludeId);
+        } else {
+            $countStmt->bind_param('s', $imageUrl);
+        }
+        $countStmt->execute();
+        $countResult = $countStmt->get_result();
+        $countRow = $countResult ? $countResult->fetch_assoc() : null;
+        if ($countResult) {
+            $countResult->free();
+        }
+        $countStmt->close();
+        $referenceCount = (int)($countRow['c'] ?? 0);
+        if ($referenceCount > 0) {
+            return 'kept_referenced';
+        }
+
+        $pathPart = parse_url($imageUrl, PHP_URL_PATH);
+        if (!$pathPart) {
+            $pathPart = $imageUrl;
+        }
+        if (strpos($pathPart, '..') !== false) {
+            return 'skipped';
+        }
+        $fileName = basename($pathPart);
+        if ($fileName === '' || $fileName === '.' || $fileName === '..') {
+            return 'skipped';
+        }
+        $fullPath = __DIR__ . '/uploads/news_event_clips/' . $fileName;
+        if (!file_exists($fullPath)) {
+            return 'file_missing';
+        }
+        return @unlink($fullPath) ? 'deleted' : 'cleanup_failed';
+    };
+
+    if ($method === 'POST' && ($path === '/api/news/upload' || $path === '/news/upload')) {
+        $file = $_FILES['image'] ?? null;
+        if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+            $sendJson(400, ['error' => 'No valid file uploaded']);
+            exit;
+        }
+        if ($file['size'] > 10 * 1024 * 1024) {
+            $sendJson(400, ['error' => 'File exceeds 10 MB limit']);
+            exit;
+        }
+        $allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        $mime = mime_content_type($file['tmp_name']);
+        if (!in_array($mime, $allowed, true)) {
+            $sendJson(400, ['error' => 'Unsupported file type']);
+            exit;
+        }
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $safeName = bin2hex(random_bytes(8)) . '.' . $ext;
+        $uploadDir = __DIR__ . '/uploads/news_event_clips/';
+        if (!is_dir($uploadDir)) { mkdir($uploadDir, 0775, true); }
+        if (!move_uploaded_file($file['tmp_name'], $uploadDir . $safeName)) {
+            $sendJson(500, ['error' => 'Failed to save file']);
+            exit;
+        }
+        $sendJson(200, ['url' => '/api/uploads/news_event_clips/' . $safeName]);
+        exit;
+    }
+
     if ($method === 'GET' && ($path === '/api/news' || $path === '/news')) {
         $mysqli = $connectDb();
         if (!$mysqli) {
@@ -366,6 +453,16 @@ if (!$frameworkReady) {
         $result = $mysqli->query('SELECT id, title, content, is_event, date, location, created_at, updated_at FROM news ORDER BY id DESC');
         if ($result) {
             while ($row = $result->fetch_assoc()) {
+                $location = (string)($row['location'] ?? '');
+                $imageUrl = '';
+                if ($isNewsUploadUrl($location) || filter_var($location, FILTER_VALIDATE_URL)) {
+                    $imageUrl = $location;
+                }
+                $row['description'] = $row['content'] ?? '';
+                $row['imageUrl'] = $imageUrl;
+                if ($imageUrl !== '') {
+                    $row['location'] = null;
+                }
                 $rows[] = $row;
             }
             $result->free();
@@ -411,6 +508,77 @@ if (!$frameworkReady) {
         if ($rowResult) {
             $rowResult->free();
         }
+        $locationOut = (string)($row['location'] ?? '');
+        $imageUrl = ($isNewsUploadUrl($locationOut) || filter_var($locationOut, FILTER_VALIDATE_URL)) ? $locationOut : '';
+        $row['description'] = $row['content'] ?? '';
+        $row['imageUrl'] = $imageUrl;
+        if ($imageUrl !== '') {
+            $row['location'] = null;
+        }
+        $mysqli->close();
+        $sendJson(200, $row);
+        exit;
+    }
+
+    if (in_array($method, ['PUT', 'PATCH']) && preg_match('#^/(api/)?news/(\d+)$#', $path, $m)) {
+        $id = (int)$m[2];
+        $data = $readJson();
+        $mysqli = $connectDb();
+        if (!$mysqli) { exit; }
+
+        $chk = $mysqli->query('SELECT id, location FROM news WHERE id = ' . $id . ' LIMIT 1');
+        if (!$chk || $chk->num_rows === 0) {
+            if ($chk) { $chk->free(); }
+            $mysqli->close();
+            $sendJson(404, ['success' => false, 'error' => 'Not found']);
+            exit;
+        }
+        $existing = $chk->fetch_assoc();
+        $oldLocation = (string)($existing['location'] ?? '');
+        $chk->free();
+
+        $fields = [];
+        $types = '';
+        $vals = [];
+        $location = $data['location'] ?? ($data['imageUrl'] ?? null);
+
+        if (isset($data['title'])) { $fields[] = 'title = ?'; $types .= 's'; $vals[] = $data['title']; }
+        if (isset($data['content']) || isset($data['description'])) {
+            $fields[] = 'content = ?';
+            $types .= 's';
+            $vals[] = ($data['content'] ?? $data['description']);
+        }
+        if (isset($data['is_event'])) { $fields[] = 'is_event = ?'; $types .= 'i'; $vals[] = (!empty($data['is_event']) ? 1 : 0); }
+        if (isset($data['date'])) { $fields[] = 'date = ?'; $types .= 's'; $vals[] = $data['date']; }
+        if ($location !== null) { $fields[] = 'location = ?'; $types .= 's'; $vals[] = $location; }
+
+        if (!empty($fields)) {
+            $vals[] = $id;
+            $types .= 'i';
+            $stmt = $mysqli->prepare('UPDATE news SET ' . implode(', ', $fields) . ' WHERE id = ?');
+            $stmt->bind_param($types, ...$vals);
+            $stmt->execute();
+            $stmt->close();
+        }
+
+        $rowResult = $mysqli->query('SELECT id, title, content, is_event, date, location, created_at, updated_at FROM news WHERE id = ' . $id . ' LIMIT 1');
+        $row = $rowResult ? $rowResult->fetch_assoc() : ['id' => $id];
+        if ($rowResult) { $rowResult->free(); }
+
+        $newLocation = (string)($row['location'] ?? '');
+        $cleanup = 'not_applicable';
+        if ($oldLocation !== '' && $oldLocation !== $newLocation) {
+            $cleanup = $cleanupNewsUploadIfUnused($mysqli, $oldLocation, $id);
+        }
+
+        $imageUrl = ($isNewsUploadUrl($newLocation) || filter_var($newLocation, FILTER_VALIDATE_URL)) ? $newLocation : '';
+        $row['description'] = $row['content'] ?? '';
+        $row['imageUrl'] = $imageUrl;
+        if ($imageUrl !== '') {
+            $row['location'] = null;
+        }
+        $row['imageCleanup'] = $cleanup;
+
         $mysqli->close();
         $sendJson(200, $row);
         exit;
@@ -422,6 +590,17 @@ if (!$frameworkReady) {
         if (!$mysqli) {
             exit;
         }
+
+        $location = '';
+        $pre = $mysqli->query('SELECT location FROM news WHERE id = ' . $id . ' LIMIT 1');
+        if ($pre && $pre->num_rows > 0) {
+            $preRow = $pre->fetch_assoc();
+            $location = (string)($preRow['location'] ?? '');
+        }
+        if ($pre) {
+            $pre->free();
+        }
+
         $stmt = $mysqli->prepare('DELETE FROM news WHERE id = ?');
         if (!$stmt) {
             $mysqli->close();
@@ -432,8 +611,14 @@ if (!$frameworkReady) {
         $stmt->execute();
         $affected = $stmt->affected_rows;
         $stmt->close();
+
+        $cleanup = 'not_applicable';
+        if ($affected > 0 && $location !== '') {
+            $cleanup = $cleanupNewsUploadIfUnused($mysqli, $location, null);
+        }
+
         $mysqli->close();
-        $sendJson(200, $affected > 0 ? ['success' => true] : ['success' => false, 'error' => 'Not found']);
+        $sendJson(200, $affected > 0 ? ['success' => true, 'imageCleanup' => $cleanup] : ['success' => false, 'error' => 'Not found']);
         exit;
     }
 

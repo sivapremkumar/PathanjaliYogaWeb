@@ -68,8 +68,21 @@ export class ApiService {
         return this.http.get<any[]>(`${this.apiUrl}/news`);
     }
 
+    uploadNewsImage(file: File): Observable<any> {
+        const token = localStorage.getItem('yoga_token');
+        const formData = new FormData();
+        formData.append('image', file);
+        return this.http.post(`${this.apiUrl}/news/upload`, formData, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+    }
+
     createNews(item: any): Observable<any> {
         return this.http.post(`${this.apiUrl}/news`, item, { headers: this.getHeaders() });
+    }
+
+    updateNews(id: number, item: any): Observable<any> {
+        return this.http.put(`${this.apiUrl}/news/${id}`, item, { headers: this.getHeaders() });
     }
 
     deleteNews(id: number): Observable<any> {

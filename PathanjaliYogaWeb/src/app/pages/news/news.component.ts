@@ -20,7 +20,10 @@ export class NewsComponent implements OnInit {
     constructor(private api: ApiService) { }
 
     private normalizeItem(item: any) {
-        const imageUrl = item.imageUrl ?? item.image_url ?? ((typeof item.location === 'string' && item.location.startsWith('http')) ? item.location : '');
+        const candidate = item.imageUrl ?? item.image_url ?? item.location ?? '';
+        const imageUrl = typeof candidate === 'string' && (candidate.startsWith('http') || candidate.startsWith('/api/uploads/news_event_clips/'))
+            ? candidate
+            : '';
 
         return {
             id: item.id,

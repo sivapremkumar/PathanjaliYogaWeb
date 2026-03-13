@@ -38,7 +38,12 @@ export class GalleryComponent implements OnInit {
                 .map(item => ({
                     id: item.id,
                     title: item.title ?? 'Gallery Item',
-                    url: item.imageUrl ?? item.image_url ?? ((typeof item.location === 'string' && item.location.startsWith('http')) ? item.location : ''),
+                    url: (() => {
+                        const candidate = item.imageUrl ?? item.image_url ?? item.location ?? '';
+                        return (typeof candidate === 'string' && (candidate.startsWith('http') || candidate.startsWith('/api/uploads/news_event_clips/')))
+                            ? candidate
+                            : '';
+                    })(),
                     type: 'Image'
                 }))
                 .filter(item => !!item.url);
