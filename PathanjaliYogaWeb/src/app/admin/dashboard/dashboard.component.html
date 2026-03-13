@@ -1,112 +1,81 @@
-<div class="min-h-screen bg-gray-50 flex">
-    <!-- Sidebar -->
-    <aside class="w-80 bg-white border-r border-gray-100 flex flex-col p-8 fixed h-full z-10">
-        <div class="flex items-center gap-4 mb-16">
-            <div
-                class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                SP</div>
-            <div class="font-bold text-gray-900 uppercase tracking-widest text-xs">Admin Panel</div>
-        </div>
-
-        <nav class="space-y-4 flex-grow">
-            <a (click)="activeTab = 'stats'" [class.bg-primary/10]="activeTab === 'stats'"
-                [class.text-primary]="activeTab === 'stats'"
-                class="flex items-center gap-4 p-4 rounded-2xl font-bold text-gray-400 hover:bg-gray-50 hover:text-primary transition-all cursor-pointer">
-                <lucide-icon [name]="LayoutDashboard" size="20"></lucide-icon>
-                Overview
-            </a>
-            <a (click)="activeTab = 'donations'" [class.bg-primary/10]="activeTab === 'donations'"
-                [class.text-primary]="activeTab === 'donations'"
-                class="flex items-center gap-4 p-4 rounded-2xl font-bold text-gray-400 hover:bg-gray-50 hover:text-primary transition-all cursor-pointer">
-                <lucide-icon [name]="Heart" size="20"></lucide-icon>
-                Donations
-            </a>
-            <a (click)="activeTab = 'trustees'" [class.bg-primary/10]="activeTab === 'trustees'"
-                [class.text-primary]="activeTab === 'trustees'"
-                class="flex items-center gap-4 p-4 rounded-2xl font-bold text-gray-400 hover:bg-gray-50 hover:text-primary transition-all cursor-pointer">
-                <lucide-icon [name]="Users" size="20"></lucide-icon>
-                Board of Trustees
-            </a>
-            <a (click)="activeTab = 'news'" [class.bg-primary/10]="activeTab === 'news'"
-                [class.text-primary]="activeTab === 'news'"
-                class="flex items-center gap-4 p-4 rounded-2xl font-bold text-gray-400 hover:bg-gray-50 hover:text-primary transition-all cursor-pointer">
-                <lucide-icon [name]="Newspaper" size="20"></lucide-icon>
-                News Management
-            </a>
-            <a (click)="activeTab = 'gallery'" [class.bg-primary/10]="activeTab === 'gallery'"
-                [class.text-primary]="activeTab === 'gallery'"
-                class="flex items-center gap-4 p-4 rounded-2xl font-bold text-gray-400 hover:bg-gray-50 hover:text-primary transition-all cursor-pointer">
-                <lucide-icon [name]="Image" size="20"></lucide-icon>
-                Gallery Management
-            </a>
-            <a (click)="activeTab = 'programs'" [class.bg-primary/10]="activeTab === 'programs'"
-                [class.text-primary]="activeTab === 'programs'"
-                class="flex items-center gap-4 p-4 rounded-2xl font-bold text-gray-400 hover:bg-gray-50 hover:text-primary transition-all cursor-pointer">
-                <lucide-icon [name]="BookOpen" size="20"></lucide-icon>
-                Programs Management
-            </a>
-            <a (click)="activeTab = 'inquiries'" [class.bg-primary/10]="activeTab === 'inquiries'"
-                [class.text-primary]="activeTab === 'inquiries'"
-                class="flex items-center gap-4 p-4 rounded-2xl font-bold text-gray-400 hover:bg-gray-50 hover:text-primary transition-all cursor-pointer">
-                <lucide-icon [name]="MessageSquare" size="20"></lucide-icon>
-                Inquiries
-                <span *ngIf="stats.newInquiries > 0"
-                    class="ml-auto w-5 h-5 bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center">{{stats.newInquiries}}</span>
-            </a>
-        </nav>
-
-        <button (click)="logout()"
-            class="flex items-center gap-4 p-4 rounded-2xl font-bold text-red-500 hover:bg-red-50 transition-all cursor-pointer">
-            <lucide-icon [name]="LogOut" size="20"></lucide-icon>
-            Logout
-        </button>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="ml-80 flex-grow p-12">
-        <div *ngIf="activeTab === 'stats'" class="animate-fade-in">
-            <div class="flex justify-between items-center mb-12">
-                <h1 class="text-4xl font-bold text-gray-900">Dashboard Overview</h1>
-                <div class="px-6 py-3 bg-white rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                    <div class="w-10 h-10 bg-secondary rounded-full flex items-center justify-center text-white">AD
-                    </div>
-                    <div class="text-sm font-bold">Admin</div>
+<div class="admin-shell min-h-screen">
+    <div class="admin-backdrop"></div>
+    <div class="relative z-10 flex min-h-screen flex-col lg:flex-row">
+        <aside class="admin-sidebar lg:sticky lg:top-0 lg:h-screen lg:w-[290px] lg:shrink-0">
+            <div class="admin-brand">
+                <div class="admin-brand-badge">SP</div>
+                <div>
+                    <p class="text-[0.7rem] tracking-[0.18em] uppercase text-slate-500 font-bold">Pathanjali Yoga Trust</p>
+                    <h1 class="admin-brand-title">Control Room</h1>
                 </div>
             </div>
 
-            <div class="grid md:grid-cols-4 gap-8">
-                <div
-                    class="card p-8 border-none shadow-2xl shadow-primary/5 bg-gradient-to-br from-primary to-primary-focus text-white">
-                    <lucide-icon [name]="Heart" size="48" class="mb-8 opacity-20"></lucide-icon>
-                    <h2 class="text-3xl font-bold mb-1">₹{{stats.totalDonations}}</h2>
-                    <p class="text-sm opacity-80 uppercase font-bold tracking-widest">Total Donations</p>
-                </div>
-                <div class="card bg-white p-8">
-                    <lucide-icon [name]="Users" size="32" class="mb-8 text-secondary"></lucide-icon>
-                    <h2 class="text-3xl font-bold text-gray-900 mb-1">{{stats.trusteeCount}}</h2>
-                    <p class="text-sm text-gray-400 uppercase font-bold tracking-widest">Active Trustees</p>
-                </div>
-                <div class="card bg-white p-8">
-                    <lucide-icon [name]="Image" size="32" class="mb-8 text-accent"></lucide-icon>
-                    <h2 class="text-3xl font-bold text-gray-900 mb-1">{{stats.galleryCount}}</h2>
-                    <p class="text-sm text-gray-400 uppercase font-bold tracking-widest">Gallery Items</p>
-                </div>
-                <div class="card bg-white p-8">
-                    <lucide-icon [name]="MessageSquare" size="32" class="mb-8 text-blue-500"></lucide-icon>
-                    <h2 class="text-3xl font-bold text-gray-900 mb-1">{{stats.newInquiries}}</h2>
-                    <p class="text-sm text-gray-400 uppercase font-bold tracking-widest">Unresolved Inquiries</p>
-                </div>
-            </div>
-        </div>
+            <nav class="admin-nav">
+                <button *ngFor="let item of navItems" (click)="activeTab = item.key"
+                    class="admin-nav-item"
+                    [class.admin-nav-item-active]="activeTab === item.key"
+                    type="button">
+                    <lucide-icon [name]="item.icon" size="18"></lucide-icon>
+                    <span>{{item.label}}</span>
+                    <span *ngIf="item.key === 'inquiries' && stats.newInquiries > 0" class="admin-nav-badge">{{stats.newInquiries}}</span>
+                </button>
+            </nav>
 
-        <!-- Active Content Area -->
-        <div *ngIf="activeTab !== 'stats'" class="animate-fade-in mt-12">
-            <app-donations *ngIf="activeTab === 'donations'"></app-donations>
-            <app-trustees *ngIf="activeTab === 'trustees'"></app-trustees>
-            <app-news *ngIf="activeTab === 'news'"></app-news>
-            <app-gallery-admin *ngIf="activeTab === 'gallery'"></app-gallery-admin>
-            <app-programs-admin *ngIf="activeTab === 'programs'"></app-programs-admin>
-            <app-inquiries *ngIf="activeTab === 'inquiries'"></app-inquiries>
-        </div>
-    </main>
+            <button (click)="logout()" class="admin-logout" type="button">
+                <lucide-icon [name]="LogOut" size="18"></lucide-icon>
+                <span>Logout</span>
+            </button>
+        </aside>
+
+        <main class="flex-1 p-4 sm:p-6 lg:p-10">
+            <header class="admin-header-card">
+                <div>
+                    <p class="admin-date-label">{{todayLabel}}</p>
+                    <h2 class="admin-page-title">{{activeTabTitle}}</h2>
+                    <p class="mt-1 text-sm text-slate-500">Manage trust operations, content, and community activity from one place.</p>
+                </div>
+                <div class="admin-user-pill">
+                    <span class="admin-user-dot"></span>
+                    <span>Administrator</span>
+                </div>
+            </header>
+
+            <section *ngIf="activeTab === 'stats'" class="animate-fade-in">
+                <div class="admin-stats-grid">
+                    <article class="admin-stat-card admin-stat-card-primary">
+                        <div class="admin-stat-icon"><lucide-icon [name]="Heart" size="22"></lucide-icon></div>
+                        <p class="admin-stat-label">Total Donations</p>
+                        <h3 class="admin-stat-value">₹{{stats.totalDonations}}</h3>
+                    </article>
+
+                    <article class="admin-stat-card">
+                        <div class="admin-stat-icon bg-emerald-100 text-emerald-700"><lucide-icon [name]="Users" size="22"></lucide-icon></div>
+                        <p class="admin-stat-label">Active Trustees</p>
+                        <h3 class="admin-stat-value">{{stats.trusteeCount}}</h3>
+                    </article>
+
+                    <article class="admin-stat-card">
+                        <div class="admin-stat-icon bg-amber-100 text-amber-700"><lucide-icon [name]="Image" size="22"></lucide-icon></div>
+                        <p class="admin-stat-label">Gallery Items</p>
+                        <h3 class="admin-stat-value">{{stats.galleryCount}}</h3>
+                    </article>
+
+                    <article class="admin-stat-card">
+                        <div class="admin-stat-icon bg-cyan-100 text-cyan-700"><lucide-icon [name]="MessageSquare" size="22"></lucide-icon></div>
+                        <p class="admin-stat-label">Unresolved Inquiries</p>
+                        <h3 class="admin-stat-value">{{stats.newInquiries}}</h3>
+                    </article>
+                </div>
+            </section>
+
+            <section *ngIf="activeTab !== 'stats'" class="animate-fade-in mt-8">
+                <app-donations *ngIf="activeTab === 'donations'"></app-donations>
+                <app-trustees *ngIf="activeTab === 'trustees'"></app-trustees>
+                <app-news *ngIf="activeTab === 'news'"></app-news>
+                <app-gallery-admin *ngIf="activeTab === 'gallery'"></app-gallery-admin>
+                <app-programs-admin *ngIf="activeTab === 'programs'"></app-programs-admin>
+                <app-inquiries *ngIf="activeTab === 'inquiries'"></app-inquiries>
+            </section>
+        </main>
+    </div>
 </div>

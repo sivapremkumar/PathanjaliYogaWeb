@@ -21,6 +21,7 @@ import { ProgramsAdminComponent } from '../programs/programs.component';
 export class DashboardComponent implements OnInit {
     stats: any = { totalDonations: 0, donationCount: 0, galleryCount: 0, newInquiries: 0, trusteeCount: 0 };
     activeTab = 'stats';
+    readonly todayLabel = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
     readonly LayoutDashboard = LayoutDashboard;
     readonly Users = Users;
@@ -31,12 +32,27 @@ export class DashboardComponent implements OnInit {
     readonly Heart = Heart;
     readonly LogOut = LogOut;
 
+    readonly navItems = [
+        { key: 'stats', label: 'Overview', icon: LayoutDashboard },
+        { key: 'donations', label: 'Donations', icon: Heart },
+        { key: 'trustees', label: 'Board of Trustees', icon: Users },
+        { key: 'news', label: 'News Management', icon: Newspaper },
+        { key: 'gallery', label: 'Gallery Management', icon: Image },
+        { key: 'programs', label: 'Programs Management', icon: BookOpen },
+        { key: 'inquiries', label: 'Inquiries', icon: MessageSquare },
+    ];
+
     constructor(private api: ApiService, private auth: AuthService) { }
 
     ngOnInit() {
         this.api.getAdminStats().subscribe(res => {
             this.stats = res;
         });
+    }
+
+    get activeTabTitle(): string {
+        const current = this.navItems.find(item => item.key === this.activeTab);
+        return current ? current.label : 'Dashboard';
     }
 
     logout() {
