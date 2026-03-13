@@ -189,8 +189,8 @@ if (!$frameworkReady) {
             $sendJson(400, ['error' => 'No valid file uploaded']);
             exit;
         }
-        if ($file['size'] > 5 * 1024 * 1024) {
-            $sendJson(400, ['error' => 'File exceeds 5 MB limit']);
+        if ($file['size'] > 10 * 1024 * 1024) {
+            $sendJson(400, ['error' => 'File exceeds 10 MB limit']);
             exit;
         }
         $allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];

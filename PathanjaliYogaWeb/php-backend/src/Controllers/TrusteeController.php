@@ -82,8 +82,8 @@ class TrusteeController {
             $response->getBody()->write(json_encode(['error' => 'No valid file uploaded']));
             return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
         }
-        if ($file->getSize() > 5 * 1024 * 1024) {
-            $response->getBody()->write(json_encode(['error' => 'File exceeds 5 MB limit']));
+        if ($file->getSize() > 10 * 1024 * 1024) {
+            $response->getBody()->write(json_encode(['error' => 'File exceeds 10 MB limit']));
             return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
         }
         $allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];

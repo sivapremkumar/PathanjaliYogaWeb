@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../services/api.service';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, Plus, Trash2, Edit, Upload, Loader, Database } from 'lucide-angular';
+import { LucideAngularModule, Plus, Trash2, Edit, Upload, Loader } from 'lucide-angular';
 
 @Component({
     selector: 'app-trustees',
@@ -11,6 +11,7 @@ import { LucideAngularModule, Plus, Trash2, Edit, Upload, Loader, Database } fro
     templateUrl: './trustees.component.html'
 })
 export class TrusteesComponent implements OnInit {
+    readonly MAX_UPLOAD_MB = 10;
     trustees: any[] = [];
     newTrustee = { name: '', role: '', description: '', imageUrl: '' };
     showForm = false;
@@ -25,16 +26,11 @@ export class TrusteesComponent implements OnInit {
     editFile: File | null = null;
     editPreviewUrl: string | null = null;
 
-    // Seed state
-    isSeeding = false;
-    seedMessage = '';
-
     readonly Plus = Plus;
     readonly Trash2 = Trash2;
     readonly Edit = Edit;
     readonly Upload = Upload;
     readonly Loader = Loader;
-    readonly Database = Database;
 
     constructor(private api: ApiService) { }
 
@@ -54,7 +50,18 @@ export class TrusteesComponent implements OnInit {
     onFileSelected(event: Event) {
         const input = event.target as HTMLInputElement;
         if (input.files && input.files[0]) {
-            this.selectedFile = input.files[0];
+            const file = input.files[0];
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file.');
+                input.value = '';
+                return;
+            }
+            if (file.size > this.MAX_UPLOAD_MB * 1024 * 1024) {
+                alert(`Image is too large. Max allowed is ${this.MAX_UPLOAD_MB} MB.`);
+                input.value = '';
+                return;
+            }
+            this.selectedFile = file;
             const reader = new FileReader();
             reader.onload = () => this.imagePreviewUrl = reader.result as string;
             reader.readAsDataURL(this.selectedFile);
@@ -65,11 +72,26 @@ export class TrusteesComponent implements OnInit {
     onEditFileSelected(event: Event) {
         const input = event.target as HTMLInputElement;
         if (input.files && input.files[0]) {
-            this.editFile = input.files[0];
+            const file = input.files[0];
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file.');
+                input.value = '';
+                return;
+            }
+            if (file.size > this.MAX_UPLOAD_MB * 1024 * 1024) {
+                alert(`Image is too large. Max allowed is ${this.MAX_UPLOAD_MB} MB.`);
+                input.value = '';
+                return;
+            }
+            this.editFile = file;
             const reader = new FileReader();
             reader.onload = () => this.editPreviewUrl = reader.result as string;
             reader.readAsDataURL(this.editFile);
         }
+    }
+
+    private getApiErrorMessage(err: any, fallback: string): string {
+        return err?.error?.error || err?.error?.message || err?.message || fallback;
     }
 
     addTrustee() {
@@ -80,9 +102,9 @@ export class TrusteesComponent implements OnInit {
                     this.newTrustee.imageUrl = res.url;
                     this.submitNewTrustee();
                 },
-                error: () => {
+                error: (err) => {
                     this.isUploading = false;
-                    alert('Image upload failed. Please try again.');
+                    alert(this.getApiErrorMessage(err, 'Image upload failed. Please try again.'));
                 }
             });
         } else {
@@ -121,9 +143,9 @@ export class TrusteesComponent implements OnInit {
                     this.editingTrustee.imageUrl = res.url;
                     this.submitEdit();
                 },
-                error: () => {
+                error: (err) => {
                     this.isUploading = false;
-                    alert('Image upload failed. Please try again.');
+                    alert(this.getApiErrorMessage(err, 'Image upload failed. Please try again.'));
                 }
             });
         } else {
@@ -143,22 +165,5 @@ export class TrusteesComponent implements OnInit {
         if (confirm('Are you certain you want to remove this trustee?')) {
             this.api.deleteTrustee(id).subscribe(() => this.loadTrustees());
         }
-    }
-
-    seedTrustees() {
-        if (!confirm('This will import the 7 default trustees if they don\'t already exist. Continue?')) return;
-        this.isSeeding = true;
-        this.seedMessage = '';
-        this.api.seedTrustees().subscribe({
-            next: (res: any) => {
-                this.isSeeding = false;
-                this.seedMessage = `Done — inserted ${res.inserted} of ${res.total} trustees.`;
-                this.loadTrustees();
-            },
-            error: () => {
-                this.isSeeding = false;
-                this.seedMessage = 'Seed failed. Check backend logs.';
-            }
-        });
     }
 }
