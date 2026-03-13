@@ -89,6 +89,32 @@ export class ApiService {
         return this.http.delete(`${this.apiUrl}/news/${id}`, { headers: this.getHeaders() });
     }
 
+    // Gallery
+    getGallery(): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/gallery`);
+    }
+
+    uploadGalleryImage(file: File): Observable<any> {
+        const token = localStorage.getItem('yoga_token');
+        const formData = new FormData();
+        formData.append('image', file);
+        return this.http.post(`${this.apiUrl}/gallery/upload`, formData, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+    }
+
+    createGallery(item: any): Observable<any> {
+        return this.http.post(`${this.apiUrl}/gallery`, item, { headers: this.getHeaders() });
+    }
+
+    updateGallery(id: number, item: any): Observable<any> {
+        return this.http.put(`${this.apiUrl}/gallery/${id}`, item, { headers: this.getHeaders() });
+    }
+
+    deleteGallery(id: number): Observable<any> {
+        return this.http.delete(`${this.apiUrl}/gallery/${id}`, { headers: this.getHeaders() });
+    }
+
     // Inquiries
     submitInquiry(inquiry: any): Observable<any> {
         return this.http.post(`${this.apiUrl}/inquiries`, inquiry);

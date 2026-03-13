@@ -40,7 +40,7 @@ if ($autoloadPath !== '' && file_exists($autoloadPath) && file_exists($autoloadR
 if (!$frameworkReady) {
     header('Access-Control-Allow-Origin: *');
     header('Access-Control-Allow-Headers: Content-Type, Authorization');
-    header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
 
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
     $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
@@ -130,6 +130,17 @@ if (!$frameworkReady) {
         $raw = file_get_contents('php://input');
         $data = json_decode($raw ?: '{}', true);
         return is_array($data) ? $data : [];
+    };
+
+    $ensureGalleryTable = function (mysqli $mysqli): void {
+        $mysqli->query("CREATE TABLE IF NOT EXISTS gallery_items (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
+            description TEXT,
+            image_url VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     };
 
     $isTrusteeUploadUrl = function (?string $imageUrl): bool {
@@ -416,6 +427,65 @@ if (!$frameworkReady) {
         return @unlink($fullPath) ? 'deleted' : 'cleanup_failed';
     };
 
+    $isGalleryUploadUrl = function (?string $imageUrl): bool {
+        if (!$imageUrl) {
+            return false;
+        }
+        $pathPart = parse_url($imageUrl, PHP_URL_PATH);
+        if (!$pathPart) {
+            $pathPart = $imageUrl;
+        }
+        return strpos($pathPart, '/api/uploads/gallery/') === 0;
+    };
+
+    $cleanupGalleryUploadIfUnused = function (mysqli $mysqli, ?string $imageUrl, ?int $excludeId = null) use ($isGalleryUploadUrl): string {
+        if (!$isGalleryUploadUrl($imageUrl)) {
+            return 'not_applicable';
+        }
+
+        $countSql = 'SELECT COUNT(*) AS c FROM gallery_items WHERE image_url = ?';
+        if ($excludeId !== null) {
+            $countSql .= ' AND id <> ?';
+        }
+        $countStmt = $mysqli->prepare($countSql);
+        if (!$countStmt) {
+            return 'cleanup_failed';
+        }
+        if ($excludeId !== null) {
+            $countStmt->bind_param('si', $imageUrl, $excludeId);
+        } else {
+            $countStmt->bind_param('s', $imageUrl);
+        }
+        $countStmt->execute();
+        $countResult = $countStmt->get_result();
+        $countRow = $countResult ? $countResult->fetch_assoc() : null;
+        if ($countResult) {
+            $countResult->free();
+        }
+        $countStmt->close();
+        $referenceCount = (int)($countRow['c'] ?? 0);
+        if ($referenceCount > 0) {
+            return 'kept_referenced';
+        }
+
+        $pathPart = parse_url($imageUrl, PHP_URL_PATH);
+        if (!$pathPart) {
+            $pathPart = $imageUrl;
+        }
+        if (strpos($pathPart, '..') !== false) {
+            return 'skipped';
+        }
+        $fileName = basename($pathPart);
+        if ($fileName === '' || $fileName === '.' || $fileName === '..') {
+            return 'skipped';
+        }
+        $fullPath = __DIR__ . '/uploads/gallery/' . $fileName;
+        if (!file_exists($fullPath)) {
+            return 'file_missing';
+        }
+        return @unlink($fullPath) ? 'deleted' : 'cleanup_failed';
+    };
+
     if ($method === 'POST' && ($path === '/api/news/upload' || $path === '/news/upload')) {
         $file = $_FILES['image'] ?? null;
         if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
@@ -622,6 +692,188 @@ if (!$frameworkReady) {
         exit;
     }
 
+    if ($method === 'POST' && ($path === '/api/gallery/upload' || $path === '/gallery/upload')) {
+        $file = $_FILES['image'] ?? null;
+        if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+            $sendJson(400, ['error' => 'No valid file uploaded']);
+            exit;
+        }
+        if ($file['size'] > 10 * 1024 * 1024) {
+            $sendJson(400, ['error' => 'File exceeds 10 MB limit']);
+            exit;
+        }
+        $allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        $mime = mime_content_type($file['tmp_name']);
+        if (!in_array($mime, $allowed, true)) {
+            $sendJson(400, ['error' => 'Unsupported file type']);
+            exit;
+        }
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $safeName = bin2hex(random_bytes(8)) . '.' . $ext;
+        $uploadDir = __DIR__ . '/uploads/gallery/';
+        if (!is_dir($uploadDir)) { mkdir($uploadDir, 0775, true); }
+        if (!move_uploaded_file($file['tmp_name'], $uploadDir . $safeName)) {
+            $sendJson(500, ['error' => 'Failed to save file']);
+            exit;
+        }
+        $sendJson(200, ['url' => '/api/uploads/gallery/' . $safeName]);
+        exit;
+    }
+
+    if ($method === 'GET' && ($path === '/api/gallery' || $path === '/gallery')) {
+        $mysqli = $connectDb();
+        if (!$mysqli) {
+            exit;
+        }
+        $ensureGalleryTable($mysqli);
+        $rows = [];
+        $result = $mysqli->query('SELECT id, title, description, image_url, created_at, updated_at FROM gallery_items ORDER BY id DESC');
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $image = (string)($row['image_url'] ?? '');
+                $row['imageUrl'] = ($isGalleryUploadUrl($image) || filter_var($image, FILTER_VALIDATE_URL)) ? $image : '';
+                $rows[] = $row;
+            }
+            $result->free();
+        }
+        $mysqli->close();
+        $sendJson(200, $rows);
+        exit;
+    }
+
+    if ($method === 'POST' && ($path === '/api/gallery' || $path === '/gallery')) {
+        $data = $readJson();
+        $title = trim((string)($data['title'] ?? 'Gallery Item'));
+        $description = (string)($data['description'] ?? '');
+        $imageUrl = (string)($data['imageUrl'] ?? ($data['image_url'] ?? ''));
+        if ($imageUrl === '') {
+            $sendJson(400, ['error' => 'Image URL is required']);
+            exit;
+        }
+
+        $mysqli = $connectDb();
+        if (!$mysqli) {
+            exit;
+        }
+        $ensureGalleryTable($mysqli);
+
+        $stmt = $mysqli->prepare('INSERT INTO gallery_items (title, description, image_url) VALUES (?, ?, ?)');
+        if (!$stmt) {
+            $mysqli->close();
+            $sendJson(500, ['error' => 'Query preparation failed']);
+            exit;
+        }
+        $stmt->bind_param('sss', $title, $description, $imageUrl);
+        $ok = $stmt->execute();
+        $newId = (int)$mysqli->insert_id;
+        $stmt->close();
+        if (!$ok) {
+            $mysqli->close();
+            $sendJson(500, ['error' => 'Failed to create gallery item']);
+            exit;
+        }
+        $rowResult = $mysqli->query('SELECT id, title, description, image_url, created_at, updated_at FROM gallery_items WHERE id = ' . $newId . ' LIMIT 1');
+        $row = $rowResult ? $rowResult->fetch_assoc() : ['id' => $newId, 'title' => $title, 'description' => $description, 'image_url' => $imageUrl];
+        if ($rowResult) {
+            $rowResult->free();
+        }
+        $image = (string)($row['image_url'] ?? '');
+        $row['imageUrl'] = ($isGalleryUploadUrl($image) || filter_var($image, FILTER_VALIDATE_URL)) ? $image : '';
+        $mysqli->close();
+        $sendJson(200, $row);
+        exit;
+    }
+
+    if (in_array($method, ['PUT', 'PATCH']) && preg_match('#^/(api/)?gallery/(\d+)$#', $path, $m)) {
+        $id = (int)$m[2];
+        $data = $readJson();
+        $mysqli = $connectDb();
+        if (!$mysqli) { exit; }
+        $ensureGalleryTable($mysqli);
+
+        $chk = $mysqli->query('SELECT id, image_url FROM gallery_items WHERE id = ' . $id . ' LIMIT 1');
+        if (!$chk || $chk->num_rows === 0) {
+            if ($chk) { $chk->free(); }
+            $mysqli->close();
+            $sendJson(404, ['success' => false, 'error' => 'Not found']);
+            exit;
+        }
+        $existing = $chk->fetch_assoc();
+        $oldImageUrl = (string)($existing['image_url'] ?? '');
+        $chk->free();
+
+        $fields = [];
+        $types = '';
+        $vals = [];
+        if (isset($data['title'])) { $fields[] = 'title = ?'; $types .= 's'; $vals[] = $data['title']; }
+        if (isset($data['description'])) { $fields[] = 'description = ?'; $types .= 's'; $vals[] = $data['description']; }
+        $imageUrl = $data['imageUrl'] ?? ($data['image_url'] ?? null);
+        if ($imageUrl !== null) { $fields[] = 'image_url = ?'; $types .= 's'; $vals[] = $imageUrl; }
+
+        if (!empty($fields)) {
+            $vals[] = $id;
+            $types .= 'i';
+            $stmt = $mysqli->prepare('UPDATE gallery_items SET ' . implode(', ', $fields) . ' WHERE id = ?');
+            $stmt->bind_param($types, ...$vals);
+            $stmt->execute();
+            $stmt->close();
+        }
+
+        $rowResult = $mysqli->query('SELECT id, title, description, image_url, created_at, updated_at FROM gallery_items WHERE id = ' . $id . ' LIMIT 1');
+        $row = $rowResult ? $rowResult->fetch_assoc() : ['id' => $id];
+        if ($rowResult) { $rowResult->free(); }
+        $newImage = (string)($row['image_url'] ?? '');
+        $cleanup = 'not_applicable';
+        if ($oldImageUrl !== '' && $oldImageUrl !== $newImage) {
+            $cleanup = $cleanupGalleryUploadIfUnused($mysqli, $oldImageUrl, $id);
+        }
+        $row['imageUrl'] = ($isGalleryUploadUrl($newImage) || filter_var($newImage, FILTER_VALIDATE_URL)) ? $newImage : '';
+        $row['imageCleanup'] = $cleanup;
+
+        $mysqli->close();
+        $sendJson(200, $row);
+        exit;
+    }
+
+    if ($method === 'DELETE' && preg_match('#^/(api/)?gallery/(\d+)$#', $path, $m)) {
+        $id = (int)$m[2];
+        $mysqli = $connectDb();
+        if (!$mysqli) {
+            exit;
+        }
+        $ensureGalleryTable($mysqli);
+
+        $imageUrl = '';
+        $pre = $mysqli->query('SELECT image_url FROM gallery_items WHERE id = ' . $id . ' LIMIT 1');
+        if ($pre && $pre->num_rows > 0) {
+            $preRow = $pre->fetch_assoc();
+            $imageUrl = (string)($preRow['image_url'] ?? '');
+        }
+        if ($pre) {
+            $pre->free();
+        }
+
+        $stmt = $mysqli->prepare('DELETE FROM gallery_items WHERE id = ?');
+        if (!$stmt) {
+            $mysqli->close();
+            $sendJson(500, ['error' => 'Query preparation failed']);
+            exit;
+        }
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $affected = $stmt->affected_rows;
+        $stmt->close();
+
+        $cleanup = 'not_applicable';
+        if ($affected > 0 && $imageUrl !== '') {
+            $cleanup = $cleanupGalleryUploadIfUnused($mysqli, $imageUrl, null);
+        }
+
+        $mysqli->close();
+        $sendJson(200, $affected > 0 ? ['success' => true, 'imageCleanup' => $cleanup] : ['success' => false, 'error' => 'Not found']);
+        exit;
+    }
+
     if ($method === 'GET' && ($path === '/api/inquiries' || $path === '/inquiries')) {
         $mysqli = $connectDb();
         if (!$mysqli) {
@@ -697,20 +949,24 @@ if (!$frameworkReady) {
             exit;
         }
         $stats = [
-            'totalTrustees' => 0,
+            'trusteeCount' => 0,
             'totalDonations' => 0,
             'donationCount' => 0,
-            'totalInquiries' => 0,
+            'newInquiries' => 0,
+            'galleryCount' => 0,
             'totalNews' => 0,
         ];
         $q1 = $mysqli->query('SELECT COUNT(*) AS c FROM trustees');
-        if ($q1) { $stats['totalTrustees'] = (int)($q1->fetch_assoc()['c'] ?? 0); $q1->free(); }
+        if ($q1) { $stats['trusteeCount'] = (int)($q1->fetch_assoc()['c'] ?? 0); $q1->free(); }
         $q2 = $mysqli->query("SELECT COALESCE(SUM(amount),0) AS s FROM donations WHERE payment_status = 'Completed'");
         if ($q2) { $stats['totalDonations'] = (float)($q2->fetch_assoc()['s'] ?? 0); $q2->free(); }
         $q3 = $mysqli->query('SELECT COUNT(*) AS c FROM donations');
         if ($q3) { $stats['donationCount'] = (int)($q3->fetch_assoc()['c'] ?? 0); $q3->free(); }
         $q4 = $mysqli->query('SELECT COUNT(*) AS c FROM inquiries');
-        if ($q4) { $stats['totalInquiries'] = (int)($q4->fetch_assoc()['c'] ?? 0); $q4->free(); }
+        if ($q4) { $stats['newInquiries'] = (int)($q4->fetch_assoc()['c'] ?? 0); $q4->free(); }
+        $ensureGalleryTable($mysqli);
+        $qg = $mysqli->query('SELECT COUNT(*) AS c FROM gallery_items');
+        if ($qg) { $stats['galleryCount'] = (int)($qg->fetch_assoc()['c'] ?? 0); $qg->free(); }
         $q5 = $mysqli->query('SELECT COUNT(*) AS c FROM news');
         if ($q5) { $stats['totalNews'] = (int)($q5->fetch_assoc()['c'] ?? 0); $q5->free(); }
         $mysqli->close();

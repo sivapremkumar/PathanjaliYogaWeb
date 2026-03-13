@@ -1,19 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ApiService } from '../../services/api.service';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Plus, Image, Trash2, Edit, Upload, Loader } from 'lucide-angular';
+import { ApiService } from '../../services/api.service';
 
 @Component({
-    selector: 'app-news',
+    selector: 'app-gallery-admin',
     standalone: true,
     imports: [CommonModule, FormsModule, LucideAngularModule],
-    templateUrl: './news.component.html'
+    templateUrl: './gallery.component.html'
 })
-export class NewsComponent implements OnInit {
+export class GalleryAdminComponent implements OnInit {
     readonly MAX_UPLOAD_MB = 10;
-    newsItems: any[] = [];
-    newItem = { title: '', description: '', imageUrl: '', is_event: false };
+    items: any[] = [];
+    newItem = { title: '', description: '', imageUrl: '' };
     showForm = false;
 
     selectedFile: File | null = null;
@@ -34,28 +34,27 @@ export class NewsComponent implements OnInit {
     constructor(private api: ApiService) { }
 
     ngOnInit() {
-        this.loadNews();
+        this.loadGallery();
     }
 
     private normalizeItem(item: any) {
-        const candidate = item.imageUrl ?? item.image_url ?? item.location ?? '';
-        const imageUrl = typeof candidate === 'string' && (candidate.startsWith('http') || candidate.startsWith('/api/uploads/news_event_clips/'))
+        const candidate = item.imageUrl ?? item.image_url ?? '';
+        const imageUrl = typeof candidate === 'string' && (candidate.startsWith('http') || candidate.startsWith('/api/uploads/gallery/'))
             ? candidate
             : '';
 
         return {
             id: item.id,
             title: item.title ?? '',
-            description: item.description ?? item.content ?? '',
+            description: item.description ?? '',
             imageUrl,
-            is_event: !!(item.is_event ?? item.isEvent ?? false),
-            createdAt: item.createdAt ?? item.created_at ?? item.date ?? null,
+            createdAt: item.createdAt ?? item.created_at ?? null,
         };
     }
 
-    loadNews() {
-        this.api.getNews().subscribe(data => {
-            this.newsItems = data.map(item => this.normalizeItem(item));
+    loadGallery() {
+        this.api.getGallery().subscribe(data => {
+            this.items = data.map(item => this.normalizeItem(item));
         });
     }
 
@@ -76,7 +75,7 @@ export class NewsComponent implements OnInit {
             this.selectedFile = file;
             const reader = new FileReader();
             reader.onload = () => this.imagePreviewUrl = reader.result as string;
-            reader.readAsDataURL(this.selectedFile);
+            reader.readAsDataURL(file);
             this.newItem.imageUrl = '';
         }
     }
@@ -98,7 +97,7 @@ export class NewsComponent implements OnInit {
             this.editFile = file;
             const reader = new FileReader();
             reader.onload = () => this.editPreviewUrl = reader.result as string;
-            reader.readAsDataURL(this.editFile);
+            reader.readAsDataURL(file);
         }
     }
 
@@ -106,38 +105,33 @@ export class NewsComponent implements OnInit {
         return err?.error?.error || err?.error?.message || err?.message || fallback;
     }
 
-    addNews() {
+    addItem() {
         if (this.selectedFile) {
             this.isUploading = true;
-            this.api.uploadNewsImage(this.selectedFile).subscribe({
+            this.api.uploadGalleryImage(this.selectedFile).subscribe({
                 next: (res: any) => {
                     this.newItem.imageUrl = res.url;
-                    this.submitNewNews();
+                    this.submitNewItem();
                 },
                 error: (err) => {
                     this.isUploading = false;
                     alert(this.getApiErrorMessage(err, 'Image upload failed. Please try again.'));
                 }
             });
-        } else {
-            this.submitNewNews();
+            return;
         }
+
+        this.submitNewItem();
     }
 
-    private submitNewNews() {
-        const payload = {
+    private submitNewItem() {
+        this.api.createGallery({
             title: this.newItem.title,
             description: this.newItem.description,
-            content: this.newItem.description,
             imageUrl: this.newItem.imageUrl,
-            location: this.newItem.imageUrl,
-            is_event: this.newItem.is_event,
-            date: new Date().toISOString().slice(0, 10),
-        };
-
-        this.api.createNews(payload).subscribe(() => {
-            this.loadNews();
-            this.newItem = { title: '', description: '', imageUrl: '', is_event: false };
+        }).subscribe(() => {
+            this.loadGallery();
+            this.newItem = { title: '', description: '', imageUrl: '' };
             this.selectedFile = null;
             this.imagePreviewUrl = null;
             this.isUploading = false;
@@ -145,7 +139,7 @@ export class NewsComponent implements OnInit {
         });
     }
 
-    editNews(item: any) {
+    editItem(item: any) {
         this.editingItem = { ...item };
         this.editFile = null;
         this.editPreviewUrl = null;
@@ -165,7 +159,7 @@ export class NewsComponent implements OnInit {
 
         if (this.editFile) {
             this.isUploading = true;
-            this.api.uploadNewsImage(this.editFile).subscribe({
+            this.api.uploadGalleryImage(this.editFile).subscribe({
                 next: (res: any) => {
                     this.editingItem.imageUrl = res.url;
                     this.submitEdit();
@@ -185,28 +179,25 @@ export class NewsComponent implements OnInit {
         if (!this.editingItem) {
             return;
         }
-        const payload = {
+
+        this.api.updateGallery(this.editingItem.id, {
             title: this.editingItem.title,
             description: this.editingItem.description,
-            content: this.editingItem.description,
             imageUrl: this.editingItem.imageUrl,
-            location: this.editingItem.imageUrl,
-            is_event: this.editingItem.is_event,
-        };
-        this.api.updateNews(this.editingItem.id, payload).subscribe(() => {
+        }).subscribe(() => {
             this.isUploading = false;
             this.cancelEdit();
-            this.loadNews();
+            this.loadGallery();
         });
     }
 
-    deleteNews(item: any) {
-        if (!confirm('Delete this post?')) {
+    deleteItem(item: any) {
+        if (!confirm('Delete this gallery item?')) {
             return;
         }
 
-        this.api.deleteNews(item.id).subscribe(() => {
-            this.newsItems = this.newsItems.filter(existing => existing.id !== item.id);
+        this.api.deleteGallery(item.id).subscribe(() => {
+            this.items = this.items.filter(existing => existing.id !== item.id);
         });
     }
 }

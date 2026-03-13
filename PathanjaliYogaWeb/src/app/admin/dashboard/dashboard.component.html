@@ -27,6 +27,12 @@
                 <lucide-icon [name]="Users" size="20"></lucide-icon>
                 Board of Trustees
             </a>
+            <a (click)="activeTab = 'news'" [class.bg-primary/10]="activeTab === 'news'"
+                [class.text-primary]="activeTab === 'news'"
+                class="flex items-center gap-4 p-4 rounded-2xl font-bold text-gray-400 hover:bg-gray-50 hover:text-primary transition-all cursor-pointer">
+                <lucide-icon [name]="Newspaper" size="20"></lucide-icon>
+                News Management
+            </a>
             <a (click)="activeTab = 'gallery'" [class.bg-primary/10]="activeTab === 'gallery'"
                 [class.text-primary]="activeTab === 'gallery'"
                 class="flex items-center gap-4 p-4 rounded-2xl font-bold text-gray-400 hover:bg-gray-50 hover:text-primary transition-all cursor-pointer">
@@ -91,7 +97,8 @@
         <div *ngIf="activeTab !== 'stats'" class="animate-fade-in mt-12">
             <app-donations *ngIf="activeTab === 'donations'"></app-donations>
             <app-trustees *ngIf="activeTab === 'trustees'"></app-trustees>
-            <app-news *ngIf="activeTab === 'gallery'"></app-news>
+            <app-news *ngIf="activeTab === 'news'"></app-news>
+            <app-gallery-admin *ngIf="activeTab === 'gallery'"></app-gallery-admin>
             <app-inquiries *ngIf="activeTab === 'inquiries'"></app-inquiries>
         </div>
     </main>

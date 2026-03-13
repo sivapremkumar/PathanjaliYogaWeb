@@ -33,14 +33,14 @@ export class GalleryComponent implements OnInit {
     ];
 
     ngOnInit() {
-        this.api.getNews().subscribe(res => {
+        this.api.getGallery().subscribe(res => {
             const apiItems = res
                 .map(item => ({
                     id: item.id,
                     title: item.title ?? 'Gallery Item',
                     url: (() => {
                         const candidate = item.imageUrl ?? item.image_url ?? item.location ?? '';
-                        return (typeof candidate === 'string' && (candidate.startsWith('http') || candidate.startsWith('/api/uploads/news_event_clips/')))
+                        return (typeof candidate === 'string' && (candidate.startsWith('http') || candidate.startsWith('/api/uploads/gallery/')))
                             ? candidate
                             : '';
                     })(),

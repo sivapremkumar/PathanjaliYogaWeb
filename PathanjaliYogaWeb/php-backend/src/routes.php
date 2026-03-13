@@ -88,6 +88,20 @@ return function (App $app) {
     $app->patch('/news/{id}', 'App\\Controllers\\NewsEventController:update');
     $app->delete('/news/{id}', 'App\\Controllers\\NewsEventController:delete');
 
+    // Gallery
+    $app->get('/api/gallery', 'App\\Controllers\\GalleryController:index');
+    $app->post('/api/gallery/upload', 'App\\Controllers\\GalleryController:upload');
+    $app->post('/api/gallery', 'App\\Controllers\\GalleryController:create');
+    $app->put('/api/gallery/{id}', 'App\\Controllers\\GalleryController:update');
+    $app->patch('/api/gallery/{id}', 'App\\Controllers\\GalleryController:update');
+    $app->delete('/api/gallery/{id}', 'App\\Controllers\\GalleryController:delete');
+    $app->get('/gallery', 'App\\Controllers\\GalleryController:index');
+    $app->post('/gallery/upload', 'App\\Controllers\\GalleryController:upload');
+    $app->post('/gallery', 'App\\Controllers\\GalleryController:create');
+    $app->put('/gallery/{id}', 'App\\Controllers\\GalleryController:update');
+    $app->patch('/gallery/{id}', 'App\\Controllers\\GalleryController:update');
+    $app->delete('/gallery/{id}', 'App\\Controllers\\GalleryController:delete');
+
     // Inquiries
     $app->post('/api/inquiries', 'App\\Controllers\\InquiryController:create');
     $app->get('/api/inquiries', 'App\\Controllers\\InquiryController:index');
