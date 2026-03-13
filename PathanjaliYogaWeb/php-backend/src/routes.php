@@ -53,14 +53,12 @@ return function (App $app) {
     // Trustees
     $app->get('/api/trustees', 'App\\Controllers\\TrusteeController:index');
     $app->post('/api/trustees/upload', 'App\\Controllers\\TrusteeController:upload');
-    $app->get('/api/trustees/seed', 'App\\Controllers\\TrusteeController:seed');
     $app->post('/api/trustees', 'App\\Controllers\\TrusteeController:create');
     $app->put('/api/trustees/{id}', 'App\\Controllers\\TrusteeController:update');
     $app->patch('/api/trustees/{id}', 'App\\Controllers\\TrusteeController:update');
     $app->delete('/api/trustees/{id}', 'App\\Controllers\\TrusteeController:delete');
     $app->get('/trustees', 'App\\Controllers\\TrusteeController:index');
     $app->post('/trustees/upload', 'App\\Controllers\\TrusteeController:upload');
-    $app->get('/trustees/seed', 'App\\Controllers\\TrusteeController:seed');
     $app->post('/trustees', 'App\\Controllers\\TrusteeController:create');
     $app->put('/trustees/{id}', 'App\\Controllers\\TrusteeController:update');
     $app->patch('/trustees/{id}', 'App\\Controllers\\TrusteeController:update');

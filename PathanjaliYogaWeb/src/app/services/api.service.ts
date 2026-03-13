@@ -45,10 +45,6 @@ export class ApiService {
         });
     }
 
-    seedTrustees(): Observable<any> {
-        return this.http.get(`${this.apiUrl}/trustees/seed`, { headers: this.getHeaders() });
-    }
-
     // Donations
     createDonationOrder(donation: any): Observable<any> {
         return this.http.post(`${this.apiUrl}/donations/order`, donation);

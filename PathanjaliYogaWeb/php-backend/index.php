@@ -132,38 +132,6 @@ if (!$frameworkReady) {
         return is_array($data) ? $data : [];
     };
 
-    if ($method === 'GET' && ($path === '/api/trustees/seed' || $path === '/trustees/seed')) {
-        $defaults = [
-            ['name' => 'Jeyaram',     'role' => 'President', 'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/jeyaram.jpeg'],
-            ['name' => 'Kasimani',    'role' => 'Trustee',   'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/kasimani.jpeg'],
-            ['name' => 'Esakki',      'role' => 'Trustee',   'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/Esakki-Durai_01.jpeg'],
-            ['name' => 'Venkatraman', 'role' => 'Trustee',   'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/Venkatraman.jpeg'],
-            ['name' => 'Marimuthu',   'role' => 'Trustee',   'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/marimuthu.jpeg'],
-            ['name' => 'Murugan',     'role' => 'Trustee',   'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/Murugan.jpeg'],
-            ['name' => 'Murugesen',   'role' => 'Trustee',   'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/Murugesen.jpeg'],
-        ];
-        $mysqli = $connectDb();
-        if (!$mysqli) { exit; }
-        $inserted = 0;
-        foreach ($defaults as $d) {
-            $chk = $mysqli->prepare('SELECT id FROM trustees WHERE name = ? LIMIT 1');
-            $chk->bind_param('s', $d['name']);
-            $chk->execute();
-            $chk->store_result();
-            if ($chk->num_rows === 0) {
-                $ins = $mysqli->prepare('INSERT INTO trustees (name, role, description, image_url) VALUES (?, ?, ?, ?)');
-                $ins->bind_param('ssss', $d['name'], $d['role'], $d['description'], $d['image_url']);
-                $ins->execute();
-                $ins->close();
-                $inserted++;
-            }
-            $chk->close();
-        }
-        $mysqli->close();
-        $sendJson(200, ['inserted' => $inserted, 'total' => count($defaults)]);
-        exit;
-    }
-
     if ($method === 'GET' && ($path === '/api/trustees' || $path === '/trustees')) {
         $mysqli = $connectDb();
         if (!$mysqli) {

@@ -103,25 +103,4 @@ class TrusteeController {
         $response->getBody()->write(json_encode(['url' => $url]));
         return $response->withHeader('Content-Type', 'application/json');
     }
-
-    public function seed(Request $request, Response $response, $args) {
-        $defaults = [
-            ['name' => 'Jeyaram',     'role' => 'President', 'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/jeyaram.jpeg'],
-            ['name' => 'Kasimani',    'role' => 'Trustee',   'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/kasimani.jpeg'],
-            ['name' => 'Esakki',      'role' => 'Trustee',   'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/Esakki-Durai_01.jpeg'],
-            ['name' => 'Venkatraman', 'role' => 'Trustee',   'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/Venkatraman.jpeg'],
-            ['name' => 'Marimuthu',   'role' => 'Trustee',   'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/marimuthu.jpeg'],
-            ['name' => 'Murugan',     'role' => 'Trustee',   'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/Murugan.jpeg'],
-            ['name' => 'Murugesen',   'role' => 'Trustee',   'description' => '', 'image_url' => 'https://www.sripathanjalitrust.com/Murugesen.jpeg'],
-        ];
-        $inserted = 0;
-        foreach ($defaults as $data) {
-            if (!Trustee::where('name', $data['name'])->exists()) {
-                Trustee::create($data);
-                $inserted++;
-            }
-        }
-        $response->getBody()->write(json_encode(['inserted' => $inserted, 'total' => count($defaults)]));
-        return $response->withHeader('Content-Type', 'application/json');
-    }
 }
