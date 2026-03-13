@@ -39,6 +39,12 @@
                 <lucide-icon [name]="Image" size="20"></lucide-icon>
                 Gallery Management
             </a>
+            <a (click)="activeTab = 'programs'" [class.bg-primary/10]="activeTab === 'programs'"
+                [class.text-primary]="activeTab === 'programs'"
+                class="flex items-center gap-4 p-4 rounded-2xl font-bold text-gray-400 hover:bg-gray-50 hover:text-primary transition-all cursor-pointer">
+                <lucide-icon [name]="BookOpen" size="20"></lucide-icon>
+                Programs Management
+            </a>
             <a (click)="activeTab = 'inquiries'" [class.bg-primary/10]="activeTab === 'inquiries'"
                 [class.text-primary]="activeTab === 'inquiries'"
                 class="flex items-center gap-4 p-4 rounded-2xl font-bold text-gray-400 hover:bg-gray-50 hover:text-primary transition-all cursor-pointer">
@@ -99,6 +105,7 @@
             <app-trustees *ngIf="activeTab === 'trustees'"></app-trustees>
             <app-news *ngIf="activeTab === 'news'"></app-news>
             <app-gallery-admin *ngIf="activeTab === 'gallery'"></app-gallery-admin>
+            <app-programs-admin *ngIf="activeTab === 'programs'"></app-programs-admin>
             <app-inquiries *ngIf="activeTab === 'inquiries'"></app-inquiries>
         </div>
     </main>

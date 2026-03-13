@@ -19,19 +19,38 @@ export class ProgramsListComponent implements OnInit {
     readonly Calendar = Calendar;
     readonly ArrowRight = ArrowRight;
 
+    private readonly fallbackPrograms = [
+        { id: 1, title: 'Traditional Padhanjali Yoga', description: 'Daily morning sessions focused on Surya Namaskar and Pranayama.', type: 'Yoga', schedule: '6:00 AM - 7:30 AM', image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=800' },
+        { id: 2, title: 'Yoga for Children', description: 'Fun and interactive sessions to improve concentration and posture in kids.', type: 'Yoga', schedule: '4:30 PM - 5:30 PM', image: 'https://images.unsplash.com/photo-1552196564-972d46387347?auto=format&fit=crop&q=80&w=800' },
+        { id: 3, title: 'Social Welfare Awareness', description: 'Monthly workshops about health, hygiene, and community development.', type: 'Welfare', schedule: 'Monthly Weekends', image: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=800' }
+    ];
+
     constructor(private api: ApiService) { }
 
-    ngOnInit() {
-        this.api.getNews().subscribe(res => {
-            // For this demo, we'll use a mix of news and hardcoded programs
-        });
+    private normalizeItem(item: any) {
+        const candidate = item.imageUrl ?? item.image_url ?? item.image ?? '';
+        const image = typeof candidate === 'string' && (candidate.startsWith('http') || candidate.startsWith('/api/uploads/programs/'))
+            ? candidate
+            : '';
 
-        // Seed with dummy data for immediate visual
-        this.programs = [
-            { id: 1, title: 'Traditional Padhanjali Yoga', description: 'Daily morning sessions focused on Surya Namaskar and Pranayama.', type: 'Yoga', schedule: '6:00 AM - 7:30 AM', image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=800' },
-            { id: 2, title: 'Yoga for Children', description: 'Fun and interactive sessions to improve concentration and posture in kids.', type: 'Yoga', schedule: '4:30 PM - 5:30 PM', image: 'https://images.unsplash.com/photo-1552196564-972d46387347?auto=format&fit=crop&q=80&w=800' },
-            { id: 3, title: 'Social Welfare Awareness', description: 'Monthly workshops about health, hygiene, and community development.', type: 'Welfare', schedule: 'Monthly Weekends', image: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=800' }
-        ];
+        return {
+            id: item.id,
+            title: item.title ?? '',
+            description: item.description ?? '',
+            type: item.type ?? 'Program',
+            schedule: item.schedule ?? '',
+            image,
+        };
+    }
+
+    ngOnInit() {
+        this.api.getPrograms().subscribe(res => {
+            const apiPrograms = res
+                .map(item => this.normalizeItem(item))
+                .filter(item => !!item.title);
+
+            this.programs = apiPrograms.length > 0 ? apiPrograms : this.fallbackPrograms;
+        });
     }
 }
 

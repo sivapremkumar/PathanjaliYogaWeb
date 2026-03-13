@@ -115,6 +115,32 @@ export class ApiService {
         return this.http.delete(`${this.apiUrl}/gallery/${id}`, { headers: this.getHeaders() });
     }
 
+    // Programs
+    getPrograms(): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/programs`);
+    }
+
+    uploadProgramImage(file: File): Observable<any> {
+        const token = localStorage.getItem('yoga_token');
+        const formData = new FormData();
+        formData.append('image', file);
+        return this.http.post(`${this.apiUrl}/programs/upload`, formData, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+    }
+
+    createProgram(item: any): Observable<any> {
+        return this.http.post(`${this.apiUrl}/programs`, item, { headers: this.getHeaders() });
+    }
+
+    updateProgram(id: number, item: any): Observable<any> {
+        return this.http.put(`${this.apiUrl}/programs/${id}`, item, { headers: this.getHeaders() });
+    }
+
+    deleteProgram(id: number): Observable<any> {
+        return this.http.delete(`${this.apiUrl}/programs/${id}`, { headers: this.getHeaders() });
+    }
+
     // Inquiries
     submitInquiry(inquiry: any): Observable<any> {
         return this.http.post(`${this.apiUrl}/inquiries`, inquiry);

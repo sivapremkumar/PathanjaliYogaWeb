@@ -143,6 +143,45 @@ if (!$frameworkReady) {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     };
 
+    $ensureProgramsTableAndSeed = function (mysqli $mysqli): void {
+        $mysqli->query("CREATE TABLE IF NOT EXISTS programs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
+            description TEXT,
+            type VARCHAR(100) DEFAULT 'Program',
+            schedule VARCHAR(255),
+            image_url VARCHAR(255),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $countResult = $mysqli->query('SELECT COUNT(*) AS c FROM programs');
+        $count = $countResult ? (int)($countResult->fetch_assoc()['c'] ?? 0) : 0;
+        if ($countResult) {
+            $countResult->free();
+        }
+        if ($count > 0) {
+            return;
+        }
+
+        $defaults = [
+            ['Traditional Padhanjali Yoga', 'Daily morning sessions focused on Surya Namaskar and Pranayama.', 'Yoga', '6:00 AM - 7:30 AM', 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=800'],
+            ['Yoga for Children', 'Fun and interactive sessions to improve concentration and posture in kids.', 'Yoga', '4:30 PM - 5:30 PM', 'https://images.unsplash.com/photo-1552196564-972d46387347?auto=format&fit=crop&q=80&w=800'],
+            ['Social Welfare Awareness', 'Monthly workshops about health, hygiene, and community development.', 'Welfare', 'Monthly Weekends', 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=800'],
+        ];
+
+        $stmt = $mysqli->prepare('INSERT INTO programs (title, description, type, schedule, image_url) VALUES (?, ?, ?, ?, ?)');
+        if (!$stmt) {
+            return;
+        }
+        foreach ($defaults as $row) {
+            [$title, $description, $type, $schedule, $imageUrl] = $row;
+            $stmt->bind_param('sssss', $title, $description, $type, $schedule, $imageUrl);
+            $stmt->execute();
+        }
+        $stmt->close();
+    };
+
     $isTrusteeUploadUrl = function (?string $imageUrl): bool {
         if (!$imageUrl) {
             return false;
@@ -480,6 +519,65 @@ if (!$frameworkReady) {
             return 'skipped';
         }
         $fullPath = __DIR__ . '/uploads/gallery/' . $fileName;
+        if (!file_exists($fullPath)) {
+            return 'file_missing';
+        }
+        return @unlink($fullPath) ? 'deleted' : 'cleanup_failed';
+    };
+
+    $isProgramUploadUrl = function (?string $imageUrl): bool {
+        if (!$imageUrl) {
+            return false;
+        }
+        $pathPart = parse_url($imageUrl, PHP_URL_PATH);
+        if (!$pathPart) {
+            $pathPart = $imageUrl;
+        }
+        return strpos($pathPart, '/api/uploads/programs/') === 0;
+    };
+
+    $cleanupProgramUploadIfUnused = function (mysqli $mysqli, ?string $imageUrl, ?int $excludeId = null) use ($isProgramUploadUrl): string {
+        if (!$isProgramUploadUrl($imageUrl)) {
+            return 'not_applicable';
+        }
+
+        $countSql = 'SELECT COUNT(*) AS c FROM programs WHERE image_url = ?';
+        if ($excludeId !== null) {
+            $countSql .= ' AND id <> ?';
+        }
+        $countStmt = $mysqli->prepare($countSql);
+        if (!$countStmt) {
+            return 'cleanup_failed';
+        }
+        if ($excludeId !== null) {
+            $countStmt->bind_param('si', $imageUrl, $excludeId);
+        } else {
+            $countStmt->bind_param('s', $imageUrl);
+        }
+        $countStmt->execute();
+        $countResult = $countStmt->get_result();
+        $countRow = $countResult ? $countResult->fetch_assoc() : null;
+        if ($countResult) {
+            $countResult->free();
+        }
+        $countStmt->close();
+        $referenceCount = (int)($countRow['c'] ?? 0);
+        if ($referenceCount > 0) {
+            return 'kept_referenced';
+        }
+
+        $pathPart = parse_url($imageUrl, PHP_URL_PATH);
+        if (!$pathPart) {
+            $pathPart = $imageUrl;
+        }
+        if (strpos($pathPart, '..') !== false) {
+            return 'skipped';
+        }
+        $fileName = basename($pathPart);
+        if ($fileName === '' || $fileName === '.' || $fileName === '..') {
+            return 'skipped';
+        }
+        $fullPath = __DIR__ . '/uploads/programs/' . $fileName;
         if (!file_exists($fullPath)) {
             return 'file_missing';
         }
@@ -867,6 +965,192 @@ if (!$frameworkReady) {
         $cleanup = 'not_applicable';
         if ($affected > 0 && $imageUrl !== '') {
             $cleanup = $cleanupGalleryUploadIfUnused($mysqli, $imageUrl, null);
+        }
+
+        $mysqli->close();
+        $sendJson(200, $affected > 0 ? ['success' => true, 'imageCleanup' => $cleanup] : ['success' => false, 'error' => 'Not found']);
+        exit;
+    }
+
+    if ($method === 'POST' && ($path === '/api/programs/upload' || $path === '/programs/upload')) {
+        $file = $_FILES['image'] ?? null;
+        if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+            $sendJson(400, ['error' => 'No valid file uploaded']);
+            exit;
+        }
+        if ($file['size'] > 10 * 1024 * 1024) {
+            $sendJson(400, ['error' => 'File exceeds 10 MB limit']);
+            exit;
+        }
+        $allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        $mime = mime_content_type($file['tmp_name']);
+        if (!in_array($mime, $allowed, true)) {
+            $sendJson(400, ['error' => 'Unsupported file type']);
+            exit;
+        }
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $safeName = bin2hex(random_bytes(8)) . '.' . $ext;
+        $uploadDir = __DIR__ . '/uploads/programs/';
+        if (!is_dir($uploadDir)) { mkdir($uploadDir, 0775, true); }
+        if (!move_uploaded_file($file['tmp_name'], $uploadDir . $safeName)) {
+            $sendJson(500, ['error' => 'Failed to save file']);
+            exit;
+        }
+        $sendJson(200, ['url' => '/api/uploads/programs/' . $safeName]);
+        exit;
+    }
+
+    if ($method === 'GET' && ($path === '/api/programs' || $path === '/programs')) {
+        $mysqli = $connectDb();
+        if (!$mysqli) {
+            exit;
+        }
+        $ensureProgramsTableAndSeed($mysqli);
+        $rows = [];
+        $result = $mysqli->query('SELECT id, title, description, type, schedule, image_url, created_at, updated_at FROM programs ORDER BY id ASC');
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $image = (string)($row['image_url'] ?? '');
+                $row['imageUrl'] = ($isProgramUploadUrl($image) || filter_var($image, FILTER_VALIDATE_URL)) ? $image : '';
+                $rows[] = $row;
+            }
+            $result->free();
+        }
+        $mysqli->close();
+        $sendJson(200, $rows);
+        exit;
+    }
+
+    if ($method === 'POST' && ($path === '/api/programs' || $path === '/programs')) {
+        $data = $readJson();
+        $title = trim((string)($data['title'] ?? ''));
+        if ($title === '') {
+            $sendJson(400, ['error' => 'Title is required']);
+            exit;
+        }
+        $description = (string)($data['description'] ?? '');
+        $type = (string)($data['type'] ?? 'Program');
+        $schedule = (string)($data['schedule'] ?? '');
+        $imageUrl = (string)($data['imageUrl'] ?? ($data['image_url'] ?? ''));
+
+        $mysqli = $connectDb();
+        if (!$mysqli) {
+            exit;
+        }
+        $ensureProgramsTableAndSeed($mysqli);
+
+        $stmt = $mysqli->prepare('INSERT INTO programs (title, description, type, schedule, image_url) VALUES (?, ?, ?, ?, ?)');
+        if (!$stmt) {
+            $mysqli->close();
+            $sendJson(500, ['error' => 'Query preparation failed']);
+            exit;
+        }
+        $stmt->bind_param('sssss', $title, $description, $type, $schedule, $imageUrl);
+        $ok = $stmt->execute();
+        $newId = (int)$mysqli->insert_id;
+        $stmt->close();
+        if (!$ok) {
+            $mysqli->close();
+            $sendJson(500, ['error' => 'Failed to create program']);
+            exit;
+        }
+        $rowResult = $mysqli->query('SELECT id, title, description, type, schedule, image_url, created_at, updated_at FROM programs WHERE id = ' . $newId . ' LIMIT 1');
+        $row = $rowResult ? $rowResult->fetch_assoc() : ['id' => $newId, 'title' => $title, 'description' => $description, 'type' => $type, 'schedule' => $schedule, 'image_url' => $imageUrl];
+        if ($rowResult) {
+            $rowResult->free();
+        }
+        $image = (string)($row['image_url'] ?? '');
+        $row['imageUrl'] = ($isProgramUploadUrl($image) || filter_var($image, FILTER_VALIDATE_URL)) ? $image : '';
+        $mysqli->close();
+        $sendJson(200, $row);
+        exit;
+    }
+
+    if (in_array($method, ['PUT', 'PATCH']) && preg_match('#^/(api/)?programs/(\d+)$#', $path, $m)) {
+        $id = (int)$m[2];
+        $data = $readJson();
+        $mysqli = $connectDb();
+        if (!$mysqli) { exit; }
+        $ensureProgramsTableAndSeed($mysqli);
+
+        $chk = $mysqli->query('SELECT id, image_url FROM programs WHERE id = ' . $id . ' LIMIT 1');
+        if (!$chk || $chk->num_rows === 0) {
+            if ($chk) { $chk->free(); }
+            $mysqli->close();
+            $sendJson(404, ['success' => false, 'error' => 'Not found']);
+            exit;
+        }
+        $existing = $chk->fetch_assoc();
+        $oldImageUrl = (string)($existing['image_url'] ?? '');
+        $chk->free();
+
+        $fields = [];
+        $types = '';
+        $vals = [];
+        if (isset($data['title'])) { $fields[] = 'title = ?'; $types .= 's'; $vals[] = $data['title']; }
+        if (isset($data['description'])) { $fields[] = 'description = ?'; $types .= 's'; $vals[] = $data['description']; }
+        if (isset($data['type'])) { $fields[] = 'type = ?'; $types .= 's'; $vals[] = $data['type']; }
+        if (isset($data['schedule'])) { $fields[] = 'schedule = ?'; $types .= 's'; $vals[] = $data['schedule']; }
+        $imageUrl = $data['imageUrl'] ?? ($data['image_url'] ?? null);
+        if ($imageUrl !== null) { $fields[] = 'image_url = ?'; $types .= 's'; $vals[] = $imageUrl; }
+
+        if (!empty($fields)) {
+            $vals[] = $id;
+            $types .= 'i';
+            $stmt = $mysqli->prepare('UPDATE programs SET ' . implode(', ', $fields) . ' WHERE id = ?');
+            $stmt->bind_param($types, ...$vals);
+            $stmt->execute();
+            $stmt->close();
+        }
+
+        $rowResult = $mysqli->query('SELECT id, title, description, type, schedule, image_url, created_at, updated_at FROM programs WHERE id = ' . $id . ' LIMIT 1');
+        $row = $rowResult ? $rowResult->fetch_assoc() : ['id' => $id];
+        if ($rowResult) { $rowResult->free(); }
+        $newImage = (string)($row['image_url'] ?? '');
+        $cleanup = 'not_applicable';
+        if ($oldImageUrl !== '' && $oldImageUrl !== $newImage) {
+            $cleanup = $cleanupProgramUploadIfUnused($mysqli, $oldImageUrl, $id);
+        }
+        $row['imageUrl'] = ($isProgramUploadUrl($newImage) || filter_var($newImage, FILTER_VALIDATE_URL)) ? $newImage : '';
+        $row['imageCleanup'] = $cleanup;
+
+        $mysqli->close();
+        $sendJson(200, $row);
+        exit;
+    }
+
+    if ($method === 'DELETE' && preg_match('#^/(api/)?programs/(\d+)$#', $path, $m)) {
+        $id = (int)$m[2];
+        $mysqli = $connectDb();
+        if (!$mysqli) {
+            exit;
+        }
+        $ensureProgramsTableAndSeed($mysqli);
+
+        $imageUrl = '';
+        $pre = $mysqli->query('SELECT image_url FROM programs WHERE id = ' . $id . ' LIMIT 1');
+        if ($pre && $pre->num_rows > 0) {
+            $preRow = $pre->fetch_assoc();
+            $imageUrl = (string)($preRow['image_url'] ?? '');
+        }
+        if ($pre) {
+            $pre->free();
+        }
+
+        $stmt = $mysqli->prepare('DELETE FROM programs WHERE id = ?');
+        if (!$stmt) {
+            $mysqli->close();
+            $sendJson(500, ['error' => 'Query preparation failed']);
+            exit;
+        }
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $affected = $stmt->affected_rows;
+        $stmt->close();
+
+        $cleanup = 'not_applicable';
+        if ($affected > 0 && $imageUrl !== '') {
+            $cleanup = $cleanupProgramUploadIfUnused($mysqli, $imageUrl, null);
         }
 
         $mysqli->close();

@@ -102,6 +102,20 @@ return function (App $app) {
     $app->patch('/gallery/{id}', 'App\\Controllers\\GalleryController:update');
     $app->delete('/gallery/{id}', 'App\\Controllers\\GalleryController:delete');
 
+    // Programs
+    $app->get('/api/programs', 'App\\Controllers\\ProgramController:index');
+    $app->post('/api/programs/upload', 'App\\Controllers\\ProgramController:upload');
+    $app->post('/api/programs', 'App\\Controllers\\ProgramController:create');
+    $app->put('/api/programs/{id}', 'App\\Controllers\\ProgramController:update');
+    $app->patch('/api/programs/{id}', 'App\\Controllers\\ProgramController:update');
+    $app->delete('/api/programs/{id}', 'App\\Controllers\\ProgramController:delete');
+    $app->get('/programs', 'App\\Controllers\\ProgramController:index');
+    $app->post('/programs/upload', 'App\\Controllers\\ProgramController:upload');
+    $app->post('/programs', 'App\\Controllers\\ProgramController:create');
+    $app->put('/programs/{id}', 'App\\Controllers\\ProgramController:update');
+    $app->patch('/programs/{id}', 'App\\Controllers\\ProgramController:update');
+    $app->delete('/programs/{id}', 'App\\Controllers\\ProgramController:delete');
+
     // Inquiries
     $app->post('/api/inquiries', 'App\\Controllers\\InquiryController:create');
     $app->get('/api/inquiries', 'App\\Controllers\\InquiryController:index');
