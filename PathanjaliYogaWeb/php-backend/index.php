@@ -132,6 +132,65 @@ if (!$frameworkReady) {
         return is_array($data) ? $data : [];
     };
 
+    $isTrusteeUploadUrl = function (?string $imageUrl): bool {
+        if (!$imageUrl) {
+            return false;
+        }
+        $pathPart = parse_url($imageUrl, PHP_URL_PATH);
+        if (!$pathPart) {
+            $pathPart = $imageUrl;
+        }
+        return strpos($pathPart, '/api/uploads/trustees/') === 0;
+    };
+
+    $cleanupTrusteeUploadIfUnused = function (mysqli $mysqli, ?string $imageUrl, ?int $excludeId = null) use ($isTrusteeUploadUrl): string {
+        if (!$isTrusteeUploadUrl($imageUrl)) {
+            return 'not_applicable';
+        }
+
+        $countSql = 'SELECT COUNT(*) AS c FROM trustees WHERE image_url = ?';
+        if ($excludeId !== null) {
+            $countSql .= ' AND id <> ?';
+        }
+        $countStmt = $mysqli->prepare($countSql);
+        if (!$countStmt) {
+            return 'cleanup_failed';
+        }
+        if ($excludeId !== null) {
+            $countStmt->bind_param('si', $imageUrl, $excludeId);
+        } else {
+            $countStmt->bind_param('s', $imageUrl);
+        }
+        $countStmt->execute();
+        $countResult = $countStmt->get_result();
+        $countRow = $countResult ? $countResult->fetch_assoc() : null;
+        if ($countResult) {
+            $countResult->free();
+        }
+        $countStmt->close();
+        $referenceCount = (int)($countRow['c'] ?? 0);
+        if ($referenceCount > 0) {
+            return 'kept_referenced';
+        }
+
+        $pathPart = parse_url($imageUrl, PHP_URL_PATH);
+        if (!$pathPart) {
+            $pathPart = $imageUrl;
+        }
+        if (strpos($pathPart, '..') !== false) {
+            return 'skipped';
+        }
+        $fileName = basename($pathPart);
+        if ($fileName === '' || $fileName === '.' || $fileName === '..') {
+            return 'skipped';
+        }
+        $fullPath = __DIR__ . '/uploads/trustees/' . $fileName;
+        if (!file_exists($fullPath)) {
+            return 'file_missing';
+        }
+        return @unlink($fullPath) ? 'deleted' : 'cleanup_failed';
+    };
+
     if ($method === 'GET' && ($path === '/api/trustees' || $path === '/trustees')) {
         $mysqli = $connectDb();
         if (!$mysqli) {
@@ -223,13 +282,15 @@ if (!$frameworkReady) {
         $data = $readJson();
         $mysqli = $connectDb();
         if (!$mysqli) { exit; }
-        $chk = $mysqli->query('SELECT id FROM trustees WHERE id = ' . $id . ' LIMIT 1');
+        $chk = $mysqli->query('SELECT id, image_url FROM trustees WHERE id = ' . $id . ' LIMIT 1');
         if (!$chk || $chk->num_rows === 0) {
             if ($chk) { $chk->free(); }
             $mysqli->close();
             $sendJson(404, ['success' => false, 'error' => 'Not found']);
             exit;
         }
+        $existing = $chk->fetch_assoc();
+        $oldImageUrl = (string)($existing['image_url'] ?? '');
         $chk->free();
         $fields = [];
         $types = '';
@@ -250,7 +311,13 @@ if (!$frameworkReady) {
         $rowResult = $mysqli->query('SELECT id, name, role, description, image_url, created_at, updated_at FROM trustees WHERE id = ' . $id . ' LIMIT 1');
         $row = $rowResult ? $rowResult->fetch_assoc() : ['id' => $id];
         if ($rowResult) { $rowResult->free(); }
+        $newImageUrl = (string)($row['image_url'] ?? '');
+        $cleanup = 'not_applicable';
+        if ($oldImageUrl !== '' && $oldImageUrl !== $newImageUrl) {
+            $cleanup = $cleanupTrusteeUploadIfUnused($mysqli, $oldImageUrl, $id);
+        }
         if ($row) { $row['imageUrl'] = $row['image_url']; }
+        if ($row) { $row['imageCleanup'] = $cleanup; }
         $mysqli->close();
         $sendJson(200, $row);
         exit;
@@ -262,6 +329,15 @@ if (!$frameworkReady) {
         if (!$mysqli) {
             exit;
         }
+        $imageUrl = '';
+        $pre = $mysqli->query('SELECT image_url FROM trustees WHERE id = ' . $id . ' LIMIT 1');
+        if ($pre && $pre->num_rows > 0) {
+            $preRow = $pre->fetch_assoc();
+            $imageUrl = (string)($preRow['image_url'] ?? '');
+        }
+        if ($pre) {
+            $pre->free();
+        }
         $stmt = $mysqli->prepare('DELETE FROM trustees WHERE id = ?');
         if (!$stmt) {
             $mysqli->close();
@@ -272,8 +348,12 @@ if (!$frameworkReady) {
         $stmt->execute();
         $affected = $stmt->affected_rows;
         $stmt->close();
+        $cleanup = 'not_applicable';
+        if ($affected > 0 && $imageUrl !== '') {
+            $cleanup = $cleanupTrusteeUploadIfUnused($mysqli, $imageUrl, null);
+        }
         $mysqli->close();
-        $sendJson(200, $affected > 0 ? ['success' => true] : ['success' => false, 'error' => 'Not found']);
+        $sendJson(200, $affected > 0 ? ['success' => true, 'imageCleanup' => $cleanup] : ['success' => false, 'error' => 'Not found']);
         exit;
     }
 

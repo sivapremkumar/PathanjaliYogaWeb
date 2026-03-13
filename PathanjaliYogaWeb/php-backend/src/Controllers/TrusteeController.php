@@ -8,6 +8,49 @@ use App\Models\Trustee;
 
 class TrusteeController {
 
+    private function isTrusteeUploadUrl(?string $imageUrl): bool {
+        if (!$imageUrl) {
+            return false;
+        }
+        $path = parse_url($imageUrl, PHP_URL_PATH);
+        if (!$path) {
+            $path = $imageUrl;
+        }
+        return strpos($path, '/api/uploads/trustees/') === 0;
+    }
+
+    private function cleanupTrusteeUploadIfUnused(?string $imageUrl, ?int $excludeTrusteeId = null): string {
+        if (!$this->isTrusteeUploadUrl($imageUrl)) {
+            return 'not_applicable';
+        }
+
+        $referenceCountQuery = Trustee::where('image_url', $imageUrl);
+        if ($excludeTrusteeId !== null) {
+            $referenceCountQuery->where('id', '!=', $excludeTrusteeId);
+        }
+        $referenceCount = $referenceCountQuery->count();
+        if ($referenceCount > 0) {
+            return 'kept_referenced';
+        }
+
+        $path = parse_url($imageUrl, PHP_URL_PATH);
+        if (!$path) {
+            $path = $imageUrl;
+        }
+        if (strpos($path, '..') !== false) {
+            return 'skipped';
+        }
+        $fileName = basename($path);
+        if ($fileName === '' || $fileName === '.' || $fileName === '..') {
+            return 'skipped';
+        }
+        $fullPath = __DIR__ . '/../../uploads/trustees/' . $fileName;
+        if (!file_exists($fullPath)) {
+            return 'file_missing';
+        }
+        return @unlink($fullPath) ? 'deleted' : 'cleanup_failed';
+    }
+
     private function readPayload(Request $request): array {
         $data = (array)$request->getParsedBody();
         if (empty($data)) {
@@ -53,12 +96,21 @@ class TrusteeController {
             $response->getBody()->write(json_encode(['success' => false, 'error' => 'Not found']));
             return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
         }
+        $oldImageUrl = (string)($trustee->image_url ?? '');
         $data = $this->readPayload($request);
         $this->mapImageUrl($data);
         $trustee->fill($data);
         $trustee->save();
+
+        $newImageUrl = (string)($trustee->image_url ?? '');
+        $cleanup = 'not_applicable';
+        if ($oldImageUrl !== '' && $oldImageUrl !== $newImageUrl) {
+            $cleanup = $this->cleanupTrusteeUploadIfUnused($oldImageUrl, (int)$trustee->id);
+        }
+
         $arr = $trustee->toArray();
         $arr['imageUrl'] = $arr['image_url'] ?? null;
+        $arr['imageCleanup'] = $cleanup;
         $response->getBody()->write(json_encode($arr));
         return $response->withHeader('Content-Type', 'application/json');
     }
@@ -67,8 +119,10 @@ class TrusteeController {
         $id = $args['id'] ?? null;
         $trustee = Trustee::find($id);
         if ($trustee) {
+            $imageUrl = (string)($trustee->image_url ?? '');
             $trustee->delete();
-            $response->getBody()->write(json_encode(['success' => true]));
+            $cleanup = $this->cleanupTrusteeUploadIfUnused($imageUrl);
+            $response->getBody()->write(json_encode(['success' => true, 'imageCleanup' => $cleanup]));
         } else {
             $response->getBody()->write(json_encode(['success' => false, 'error' => 'Not found']));
         }
