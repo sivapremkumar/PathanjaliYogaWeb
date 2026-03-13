@@ -1247,6 +1247,118 @@ if (!$frameworkReady) {
         exit;
     }
 
+    if ($method === 'GET' && ($path === '/api/donations/razorpay-key' || $path === '/donations/razorpay-key')) {
+        $key = (string)(getenv('RAZORPAY_KEY_ID') ?: '');
+        if ($key === 'your_razorpay_key_id') {
+            $key = '';
+        }
+        $sendJson(200, ['key' => $key, 'configured' => $key !== '']);
+        exit;
+    }
+
+    if ($method === 'POST' && ($path === '/api/donations/order' || $path === '/donations/order')) {
+        $data = $readJson();
+
+        $donorName = trim((string)($data['donor_name'] ?? ($data['donorName'] ?? '')));
+        $email = trim((string)($data['email'] ?? ''));
+        $phone = trim((string)($data['phone'] ?? ''));
+        $amount = (float)($data['amount'] ?? 0);
+        $panNumber = trim((string)($data['pan_number'] ?? ($data['panNumber'] ?? '')));
+        $address = trim((string)($data['address'] ?? ''));
+
+        if ($donorName === '') {
+            $sendJson(400, ['error' => 'Donor name is required']);
+            exit;
+        }
+        if ($amount <= 0) {
+            $sendJson(400, ['error' => 'Amount must be greater than zero']);
+            exit;
+        }
+
+        $mysqli = $connectDb();
+        if (!$mysqli) {
+            exit;
+        }
+
+        $stmt = $mysqli->prepare('INSERT INTO donations (donor_name, email, phone, amount, pan_number, address, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        if (!$stmt) {
+            $mysqli->close();
+            $sendJson(500, ['error' => 'Query preparation failed']);
+            exit;
+        }
+
+        $status = 'Pending';
+        $stmt->bind_param('sssdsss', $donorName, $email, $phone, $amount, $panNumber, $address, $status);
+        $ok = $stmt->execute();
+        $newId = (int)$mysqli->insert_id;
+        $stmt->close();
+
+        if (!$ok) {
+            $mysqli->close();
+            $sendJson(500, ['error' => 'Failed to create donation order']);
+            exit;
+        }
+
+        $rowResult = $mysqli->query('SELECT id, donor_name, email, phone, amount, pan_number, address, payment_status, transaction_id, receipt_path, created_at, updated_at FROM donations WHERE id = ' . $newId . ' LIMIT 1');
+        $row = $rowResult ? $rowResult->fetch_assoc() : null;
+        if ($rowResult) {
+            $rowResult->free();
+        }
+        $mysqli->close();
+
+        $sendJson(200, [
+            'orderId' => (string)$newId,
+            'order_id' => (string)$newId,
+            'id' => $newId,
+            'paymentStatus' => 'Pending',
+            'donation' => $row,
+        ]);
+        exit;
+    }
+
+    if ($method === 'POST' && ($path === '/api/donations/verify' || $path === '/donations/verify')) {
+        $data = $readJson();
+        $id = (int)($data['id'] ?? ($data['orderId'] ?? ($data['order_id'] ?? 0)));
+        $transactionId = (string)($data['transaction_id'] ?? ($data['transactionId'] ?? ($data['paymentId'] ?? ($data['razorpay_payment_id'] ?? ''))));
+
+        if ($id <= 0) {
+            $sendJson(400, ['verified' => false, 'error' => 'Donation ID is required']);
+            exit;
+        }
+
+        $mysqli = $connectDb();
+        if (!$mysqli) {
+            exit;
+        }
+
+        $stmt = $mysqli->prepare('UPDATE donations SET payment_status = ?, transaction_id = COALESCE(NULLIF(?,\'\'), transaction_id) WHERE id = ?');
+        if (!$stmt) {
+            $mysqli->close();
+            $sendJson(500, ['error' => 'Query preparation failed']);
+            exit;
+        }
+        $status = 'Completed';
+        $stmt->bind_param('ssi', $status, $transactionId, $id);
+        $stmt->execute();
+        $affected = $stmt->affected_rows;
+        $stmt->close();
+
+        $rowResult = $mysqli->query('SELECT id, donor_name, email, phone, amount, pan_number, address, payment_status, transaction_id, receipt_path, created_at, updated_at FROM donations WHERE id = ' . $id . ' LIMIT 1');
+        $row = $rowResult ? $rowResult->fetch_assoc() : null;
+        if ($rowResult) {
+            $rowResult->free();
+        }
+        $mysqli->close();
+
+        if (!$row) {
+            $sendJson(404, ['verified' => false, 'error' => 'Donation not found']);
+            exit;
+        }
+
+        $sendJson(200, ['verified' => true, 'updated' => $affected > 0, 'donation' => $row]);
+        exit;
+    }
+
     if ($method === 'GET' && ($path === '/api/donations' || $path === '/donations')) {
         $mysqli = $connectDb();
         if (!$mysqli) {

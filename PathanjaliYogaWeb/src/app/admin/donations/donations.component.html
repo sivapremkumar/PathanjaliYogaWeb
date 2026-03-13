@@ -12,6 +12,7 @@
                         <th class="p-6">Donor</th>
                         <th class="p-6">Email</th>
                         <th class="p-6">Amount</th>
+                        <th class="p-6">Status</th>
                         <th class="p-6">Date</th>
                         <th class="p-6">Transaction ID</th>
                     </tr>
@@ -21,12 +22,21 @@
                         <td class="p-6 font-bold text-gray-900">{{d.donorName || 'Anonymous'}}</td>
                         <td class="p-6 text-gray-500">{{d.donorEmail || '-'}}</td>
                         <td class="p-6 font-bold text-primary">₹{{d.amount}}</td>
+                        <td class="p-6">
+                            <span class="px-3 py-1 rounded-full text-xs font-bold"
+                                [class.bg-green-100]="d.paymentStatus === 'Completed'"
+                                [class.text-green-700]="d.paymentStatus === 'Completed'"
+                                [class.bg-amber-100]="d.paymentStatus !== 'Completed'"
+                                [class.text-amber-700]="d.paymentStatus !== 'Completed'">
+                                {{d.paymentStatus || 'Pending'}}
+                            </span>
+                        </td>
                         <td class="p-6 text-gray-500">{{d.createdAt | date:'medium'}}</td>
-                        <td class="p-6 font-mono text-xs text-gray-400">{{d.razorpayPaymentId || d.razorpayOrderId}}
+                        <td class="p-6 font-mono text-xs text-gray-400">{{d.transactionId || '-'}}
                         </td>
                     </tr>
                     <tr *ngIf="donations.length === 0">
-                        <td colspan="5" class="p-12 text-center text-gray-400 font-bold italic">No donations found.</td>
+                        <td colspan="6" class="p-12 text-center text-gray-400 font-bold italic">No donations found.</td>
                     </tr>
                 </tbody>
             </table>

@@ -19,7 +19,7 @@
                         </div>
                         <div>
                             <h4 class="font-bold text-gray-900">Secure Payments</h4>
-                            <p class="text-sm text-gray-500">Integrated with Razorpay for encrypted, safe transactions.
+                            <p class="text-sm text-gray-500">Payments run through Razorpay once your account keys are configured.
                             </p>
                         </div>
                     </div>
@@ -69,10 +69,12 @@
                             class="w-full bg-background border-none rounded-2xl p-4 transition-all outline-none">
                     </div>
 
-                    <button type="submit" [disabled]="!donationForm.valid"
+                    <button type="submit" [disabled]="!donationForm.valid || isSubmitting"
                         class="btn-primary w-full py-6 text-xl justify-center shadow-xl shadow-primary/20">
-                        Proceed to Payment
+                        {{ isSubmitting ? 'Processing...' : 'Proceed to Payment' }}
                     </button>
+
+                    <p *ngIf="statusMessage" class="text-sm text-gray-500 text-center">{{statusMessage}}</p>
                 </form>
 
                 <div *ngIf="isPaymentSuccessful" class="text-center py-24 animate-fade-in">
@@ -80,11 +82,13 @@
                         class="w-24 h-24 bg-primary text-white rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl scale-110">
                         <lucide-icon [name]="ShieldCheck" size="48"></lucide-icon>
                     </div>
-                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Payment Successful!</h2>
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">
+                        {{ isPaymentCompleted ? 'Payment Successful!' : 'Donation Request Submitted!' }}
+                    </h2>
                     <p class="text-gray-500 mb-12">Thank you for your generous contribution of ₹{{donation.amount}}.
                         Your donation helps us provide yoga training and welfare for the community.</p>
 
-                    <button (click)="downloadReceipt()" class="btn-secondary w-full py-5 justify-center">
+                    <button *ngIf="isPaymentCompleted" (click)="downloadReceipt()" class="btn-secondary w-full py-5 justify-center">
                         <lucide-icon [name]="Download" size="20"></lucide-icon>
                         Download Receipt (PDF)
                     </button>

@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { LucideAngularModule, Heart, ShieldCheck, Download } from 'lucide-angular';
-import { environment } from '../../../environments/environment';
 
 declare var Razorpay: any;
 
@@ -17,6 +16,9 @@ declare var Razorpay: any;
 export class DonateComponent {
     donation = { donorName: '', amount: 500, email: '', phone: '' };
     isPaymentSuccessful = false;
+    isPaymentCompleted = false;
+    isSubmitting = false;
+    statusMessage = '';
     receiptId?: number;
 
     readonly Heart = Heart;
@@ -26,10 +28,58 @@ export class DonateComponent {
     constructor(private api: ApiService) { }
 
     onDonate() {
-        this.api.createDonationOrder(this.donation).subscribe(res => {
-            this.api.getRazorpayKey().subscribe(keyRes => {
-                this.payWithRazorpay(res.orderId, keyRes.key);
-            });
+        if (this.isSubmitting) {
+            return;
+        }
+
+        this.isSubmitting = true;
+        this.statusMessage = '';
+
+        const payload = {
+            donor_name: this.donation.donorName,
+            email: this.donation.email,
+            phone: this.donation.phone,
+            amount: this.donation.amount,
+        };
+
+        this.api.createDonationOrder(payload).subscribe({
+            next: (res) => {
+                const orderId = String(res?.orderId ?? res?.order_id ?? res?.id ?? '');
+                if (!orderId) {
+                    this.isSubmitting = false;
+                    this.statusMessage = 'Unable to create donation request. Please try again.';
+                    return;
+                }
+
+                this.receiptId = Number(orderId);
+
+                this.api.getRazorpayKey().subscribe({
+                    next: (keyRes: any) => {
+                        const razorpayKey = String(keyRes?.key ?? '').trim();
+                        const isRazorpayReady = razorpayKey !== '' && typeof Razorpay !== 'undefined';
+
+                        if (!isRazorpayReady) {
+                            this.isPaymentSuccessful = true;
+                            this.isPaymentCompleted = false;
+                            this.isSubmitting = false;
+                            this.statusMessage = 'Donation request saved successfully. Payment gateway is not configured yet.';
+                            return;
+                        }
+
+                        this.payWithRazorpay(orderId, razorpayKey);
+                    },
+                    error: () => {
+                        this.isPaymentSuccessful = true;
+                        this.isPaymentCompleted = false;
+                        this.isSubmitting = false;
+                        this.statusMessage = 'Donation request saved successfully. Payment gateway key could not be loaded.';
+                    }
+                });
+            },
+            error: (err) => {
+                this.isSubmitting = false;
+                this.statusMessage = err?.error?.error || err?.error?.message || 'Unable to submit donation request. Please try again.';
+            }
         });
     }
 
@@ -42,7 +92,16 @@ export class DonateComponent {
             description: "Donation for Welfare Programs",
             order_id: orderId,
             handler: (response: any) => {
-                this.verifyPayment(response);
+                this.verifyPayment({
+                    ...response,
+                    id: Number(orderId),
+                    orderId,
+                });
+            },
+            modal: {
+                ondismiss: () => {
+                    this.isSubmitting = false;
+                }
             },
             prefill: {
                 name: this.donation.donorName,
@@ -52,25 +111,45 @@ export class DonateComponent {
             theme: { color: "#2C5F2D" }
         };
 
-        const rzp = new Razorpay(options);
-        rzp.open();
+        try {
+            const rzp = new Razorpay(options);
+            rzp.open();
+        } catch {
+            this.isSubmitting = false;
+            this.statusMessage = 'Payment gateway is currently unavailable. Donation request has been saved.';
+            this.isPaymentSuccessful = true;
+            this.isPaymentCompleted = false;
+        }
     }
 
     verifyPayment(payment: any) {
         const payload = {
-            orderId: payment.razorpay_order_id,
+            id: payment.id ?? payment.orderId ?? payment.razorpay_order_id,
+            orderId: payment.orderId ?? payment.razorpay_order_id,
             paymentId: payment.razorpay_payment_id,
-            signature: payment.razorpay_signature
+            signature: payment.razorpay_signature,
+            transaction_id: payment.razorpay_payment_id,
         };
 
-        this.api.verifyPayment(payload).subscribe(res => {
-            this.isPaymentSuccessful = true;
-            // In real scenario, return receipt ID
+        this.api.verifyPayment(payload).subscribe({
+            next: (res) => {
+                this.isPaymentSuccessful = true;
+                this.isPaymentCompleted = true;
+                this.isSubmitting = false;
+                this.statusMessage = 'Payment successful. Thank you for your generous contribution.';
+                const donationId = Number(res?.donation?.id ?? payload.id ?? 0);
+                if (donationId > 0) {
+                    this.receiptId = donationId;
+                }
+            },
+            error: (err) => {
+                this.isSubmitting = false;
+                this.statusMessage = err?.error?.error || err?.error?.message || 'Payment verification failed. Please contact support.';
+            }
         });
     }
 
     downloadReceipt() {
-        // Trigger backend PDF download
-        window.open(`${environment.apiUrl}/Donation/receipt/${this.receiptId}`, '_blank');
+        alert('Receipt download will be enabled after payment gateway setup is completed.');
     }
 }
