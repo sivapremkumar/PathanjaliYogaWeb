@@ -20,6 +20,7 @@ export class GalleryComponent implements OnInit {
     readonly Search = Search;
     readonly ChevronLeft = ChevronLeft;
     readonly ChevronRight = ChevronRight;
+    readonly bannerUrl = `${environment.uploadsBase}/others/Yoga-wellness-banner.jpeg`;
     readonly galleryUploadsBase = `${environment.uploadsBase}/gallery`;
 
     constructor(private api: ApiService) { }
